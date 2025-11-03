@@ -7,7 +7,7 @@ export const getAmenities = async () => {
         throw new Error("Unauthorized Access");
     }
     try {
-        const result = await prisma.amenity.findMany();
+        const result = await prisma.amenities.findMany();
         return result;
     } catch (error) {
         console.log(error);

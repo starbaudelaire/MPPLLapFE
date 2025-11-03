@@ -1,9 +1,10 @@
 //lanjutin sebelumnya
-import {object, string, number, coerce} from "zod";
-
+import {object, string, array, coerce} from "zod";
+//paling atas
 export const RoomSchema = object({
     name: string().min(1),
     description: string().min(50),
-    capacity: number().gt(0),
+    capacity: coerce.number().gt(0),
     price: coerce.number().gt(0), 
+    amenities: array(string()).nonempty(),
 })
