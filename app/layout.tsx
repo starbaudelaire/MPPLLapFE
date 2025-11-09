@@ -1,19 +1,13 @@
 import type { Metadata } from "next";
-import { Raleway } from "next/font/google";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-import { SessionProvider } from "next-auth/react";
-import { auth } from "@/auth";
+import { SessionProvider } from "next-auth/react"; // <-- Tetep ada
+import { auth } from "@/auth"; // <-- Tetep ada
 import "./globals.css";
 
-const raleway = Raleway({
-  variable: "--font-raleway",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "Home",
-  description: "Online Booking",
+  title: "Lapang.in - Booking Lapangan Olahraga", // <-- Ganti judul
+  description: "Cari dan booking lapangan futsal, basket, badminton.", // <-- Ganti deskripsi
 };
 
 export default async function RootLayout({
@@ -21,18 +15,28 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   const session = await auth();
   return (
     <html lang="en">
-      <body className={`${raleway.variable} antialiased`}>
+      <head>
+        {/* Tambahin link font dari repo 'master' */}
+        <link
+          rel="stylesheet"
+          as="style"
+          crossOrigin="anonymous"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+        />
+      </head>
+      {/* Ganti font dan background global */}
+      <body className="font-sans antialiased">
         <SessionProvider session={session}>
-
-        <Navbar />
-        <main className="bg-gray-50 min-h-screen">{children}</main>
-        <Footer />
+          {" "}
+          {/* <-- Wrapper-nya tetep aman */}
+          <Navbar />
+          {/* Ganti background main content */}
+          <main className="bg-lapang-gray min-h-screen">{children}</main>
+          <Footer />
         </SessionProvider>
-
       </body>
     </html>
   );

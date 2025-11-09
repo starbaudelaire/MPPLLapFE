@@ -1,45 +1,71 @@
-//lanjutin sbelumnya
-import { RoomSchema} from "@/lib/zod"
-import { redirect } from "next/navigation"
-import { prisma } from "./prisma"
+// lib/action.ts
 
-export const saveRoom = async (image: string, prevState: unknown, formData: FormData) => {
-    if(!image) return { message: "Image is Required."}
+"use server"; // <-- Tambahin "use server" di atas
 
-    const rawData = {
-        name: formData.get("name"),
-        description: formData.get("description"),
-        capacity: formData.get("capacity"),
-        price: formData.get("price"),
-        amenities: formData.getAll("amenities"),
-    }
+import { FieldSchema } from "@/lib/zod"; // <-- Ganti RoomSchema jadi FieldSchema
+import { redirect } from "next/navigation";
+import { prisma } from "./prisma";
 
-    const validateFields = RoomSchema.safeParse(rawData)
-    if(!validateFields.success){
-        return{error: validateFields.error.flatten().fieldErrors}
-    }
-    
-    const {name, description, price, capacity, amenities} = validateFields.data
+// Ganti nama fungsi dan parameternya
+export const saveField = async (
+  image: string,
+  prevState: unknown,
+  formData: FormData
+) => {
+  if (!image) return { message: "Image is Required." };
 
-    try{
-        await prisma.room.create({
-            data: {
-                name,
-                description,
-                image,
-                price,
-                capacity,
-                RoomAmenties:{
-                    createMany:{
-                        data: amenities.map((item) => ({
-                            amenitiesId: item
-                        }))
-                    }
-                }
-            }
-        })
-    } catch(error){
-        console.log(error);
-    }
-    redirect("/admin/room")
-}
+  // Sesuaikan sama field baru
+  const rawData = {
+    name: formData.get("name"),
+    description: formData.get("description"),
+    capacity: formData.get("capacity"),
+    pricePerHour: formData.get("pricePerHour"), // <-- Ganti
+    amenities: formData.getAll("amenities"),
+    image: image, // <-- Tambah
+    address: formData.get("address"), // <-- Tambah
+    type: formData.get("type"), // <-- Tambah
+  };
+
+  const validateFields = FieldSchema.safeParse(rawData); // <-- Ganti
+  if (!validateFields.success) {
+    return { error: validateFields.error.flatten().fieldErrors };
+  }
+
+  // Destructure data baru
+  const {
+    name,
+    description,
+    pricePerHour,
+    capacity,
+    amenities,
+    address,
+    type,
+  } = validateFields.data;
+
+  try {
+    // Ganti prisma.room.create jadi prisma.field.create
+    await prisma.field.create({
+      data: {
+        name,
+        description,
+        image,
+        pricePerHour, // <-- Ganti
+        capacity,
+        address, // <-- Tambah
+        type, // <-- Tambah
+        FieldAmenities: {
+          // <-- Ganti RoomAmenties
+          createMany: {
+            data: amenities.map((item) => ({
+              amenitiesId: item,
+            })),
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return { message: "Failed to create field." }; // <-- Kasih error message
+  }
+  redirect("/admin/field"); // <-- Ganti redirect
+};

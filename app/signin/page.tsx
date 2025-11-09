@@ -1,5 +1,7 @@
 import { Metadata } from "next";
-import {LoginGoogleButton} from "@/components/login-button";
+import { LoginGoogleButton } from "@/components/login-button";
+import Image from "next/image";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -7,12 +9,24 @@ export const metadata: Metadata = {
 
 const SignInPage = () => {
   return (
-    <div className="min-h-screen flex items-center">
-      <div className="bg-white w-96 mx-auto rounded-sm shadow p-8">
-        <h1 className="text-4xl font-bold mb-1">SignIn</h1>
-        <p className="font-medium mb-5 text-gray-500">
-          Sign In to Your Account
-        </p>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <Image
+        src="/well-2.png"
+        alt="Background"
+        fill
+        className="object-cover object-center w-full h-full"
+      />
+      <div className="relative bg-white max-w-sm w-full rounded-2xl shadow-lg p-8 z-10">
+        <Link href="/" className="flex justify-center mb-6">
+          <Image src="/lapang-in.png" width={120} height={46} alt="logo" />
+        </Link>
+
+        <div className="text-center">
+          <h1 className="text-3xl font-semibold mb-1">Sign In</h1>
+          <p className="font-medium mb-6 text-gray-500">
+            Sign In to Your Account
+          </p>
+        </div>
         <div className="py-4 text-center">
           <LoginGoogleButton />
         </div>

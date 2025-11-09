@@ -1,48 +1,60 @@
 import { Metadata } from "next";
-import Image from "next/image"
-import {IoEyeOutline, IoLocateOutline} from "react-icons/io5"
-import HeaderSection from "@/components/header-section"
+import Image from "next/image";
+import { IoEyeOutline, IoLocateOutline } from "react-icons/io5";
+import HeaderSection from "@/components/header-section";
 
-export const metadata: Metadata={
-    title:"About",
-    description:"Who We Are",
+export const metadata: Metadata = {
+  title: "About",
 };
 
 const page = () => {
   return (
     <div>
-        <HeaderSection title="About Us" subTitle="Learn more about our company" />
-        <div className="max-w-screen-xl mx-auto py-20 px-4">
-            <div className="grid md:grid-cols-2 gap-8">
-                <Image src="/about-image.jpg" width={650} height={579} alt="about image"/>
-                <div>
-                    <h1 className="text-5xl font-semibold text-gray-900 mb-4">Who We are</h1>
-                    <p className="text-gray-700 py-5">Lorem ipsum dolor sit amet consectetur adipisicing elit. Distinctio est perferendis nobis quibusdam sit hic odio numquam. Ducimus, repellat consectetur?</p>
-                    <ul className="list-item space-y-6 pt-8">
-                        <li className="flex gap-5">
-                            <div className="flex-none mt-1">
-                                <IoEyeOutline className="size-7"/>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-lg font-semibold mb-1">Vision : </h4>
-                                <p className="text-gray-600">Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur officia minima perspiciatis et voluptate necessitatibus!</p>
-                            </div>
-                        </li> 
-                        <li className="flex gap-5">
-                            <div className="flex-none mt-1">
-                                <IoLocateOutline className="size-7"/>
-                            </div>
-                            <div className="flex-1">
-                                <h4 className="text-lg font-semibold mb-1">Mission : </h4>
-                                <p className="text-gray-600">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Alias dolore, labore ducimus debitis fuga accusamus illo obcaecati accusantium autem nam?</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+      <HeaderSection title="About Us" />
+      <div className="max-w-4xl mx-auto py-20 px-4 text-center">
+        <p className="text-lg text-gray-700 max-w-2xl mx-auto">
+          A team of sport lovers and tech builders, creating a platform that
+          turns court booking into a smooth digital experience.
+        </p>
+        <Image
+          src="/lapangan-about.jpg"
+          width={900}
+          height={600}
+          alt="about image"
+          className="rounded-2xl mt-12 mb-16 shadow-lg"
+        />
+        <div className="grid md:grid-cols-2 gap-12 text-left">
+          <div className="flex gap-5">
+            <div className="flex-none mt-1">
+              <IoEyeOutline className="size-8 text-[#f64e42]" />
             </div>
+            <div className="flex-1">
+              <h4 className="text-2xl font-semibold mb-2">Vision : </h4>
+              <p className="text-gray-600">
+                To make booking sports fields as easy as ordering coffee-fast,
+                smooth, and always available. We want every player, team, and
+                community to feel connected through the power of play and tech.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-5">
+            <div className="flex-none mt-1">
+              <IoLocateOutline className="size-8 text-[#f64e42]" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-2xl font-semibold mb-2">Mission : </h4>
+              <p className="text-gray-600">
+                We’re here to simplify how people find and book courts, support
+                local venues with smart tools, and build a digital playground
+                where sports meet convenience. No more double bookings, no more
+                drama-just game on.
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;
