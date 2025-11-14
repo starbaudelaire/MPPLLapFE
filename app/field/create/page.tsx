@@ -1,15 +1,12 @@
-// app/field/create/page.tsx
+import CreateField from "@/components/admin/field/create-field"; // <-- Ganti nama
 
-// v-- GANTI IMPORT PATH & NAMA KOMPONENNYA --v
-import CreateField from "@/components/admin/field/create-field";
-
-// v-- GANTI NAMA PAGE-NYA (OPSIONAL TAPI RAPI) --v
 const CreateFieldPage = () => {
+  // <-- Ganti nama
   return (
     <div className="max-w-screen-xl px-4 py-16 mt-10 mx-auto">
-      <CreateField /> {/* <-- GANTI KOMPONENNYA */}
+      <CreateField /> {/* <-- Ganti nama */}
     </div>
   );
 };
 
-export default CreateFieldPage; // <-- GANTI EXPORT-NYA
+export default CreateFieldPage; // <-- Ganti nama

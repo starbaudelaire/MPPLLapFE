@@ -1,22 +1,27 @@
 "use client";
-
 import { useRef, useState, useTransition } from "react";
-// import { useActionState } from "react"; // Ngga dipake di 'master'
-import { saveField } from "@/lib/action"; // <-- Ganti ke saveField
-import { type putBlobResult } from "@vercel/blob";
+import { useActionState } from "react";
+import { saveField } from "@/lib/action"; // <-- GANTI JADI saveField
+import { type PutBlobResult } from "@vercel/blob";
 import { IoCloudUploadOutline, IoTrashOutline } from "react-icons/io5";
 import Image from "next/image";
 //import {BarLoader} from "react-spinners"
-import { Amenities, SportType } from "@/app/generated/prisma/client"; // <-- Benerin import path
-import clsx from "clsx"; // <-- Import clsx
-import { useActionState } from "react"; // <-- Import useActionState
+import { Amenities } from "@/app/generated/prisma/client"; // <-- Path benerin
+import clsx from "clsx";
+import type { FormState } from "@/lib/action"; // <-- Impor FormState
 
-//                                          v-- Tambahin '[]' (array)
+// Komponen helper buat nampilin error
+const FieldError = ({ errors }: { errors?: string[] }) => {
+  if (!errors || errors.length === 0) return null;
+  return <p className="text-sm text-red-500 mt-2">{errors[0]}</p>;
+};
+
 const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
+  // <-- Tambahin []
   const inputFileRef = useRef<HTMLInputElement>(null);
   const [image, setImage] = useState("");
   const [message, setMessage] = useState("");
-  const [pending, startTransition] = useTransition(); // <-- Benerin 'userTransition'
+  const [pending, startTransition] = useTransition();
 
   const handleUpload = () => {
     if (!inputFileRef.current?.files) return null;
@@ -32,14 +37,11 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
         const data = await response.json();
         if (response.status !== 200) {
           setMessage(data.message);
-          return; // <-- Stop kalo gagal
         }
-        const img = data as putBlobResult;
+        const img = data as PutBlobResult;
         setImage(img.url);
-        setMessage(""); // <-- Clear message kalo sukses
       } catch (error) {
         console.log(error);
-        setMessage("Upload failed.");
       }
     });
   };
@@ -47,8 +49,8 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
   const deleteImage = (image: string) => {
     startTransition(async () => {
       try {
-        // Benerin typo 'iamgeUrl' jadi 'imageUrl'
         await fetch(`/api/upload/?imageUrl=${image}`, {
+          // <-- Benerin param
           method: "DELETE",
         });
         setImage(""); // <-- Ganti jadi string kosong
@@ -58,10 +60,10 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
     });
   };
 
-  // Pake useActionState dari repo lama
+  const initialState: FormState = { status: "idle", message: "" };
   const [state, formAction, isPending] = useActionState(
-    saveField.bind(null, image),
-    null
+    saveField.bind(null, image), // <-- Pake saveField
+    initialState
   );
 
   return (
@@ -73,12 +75,10 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
               type="text"
               name="name"
               className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-              placeholder="Field Name.."
+              placeholder="Field Name.." // <-- Ganti jadi Field
             />
             <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.name}
-              </span>
+              <FieldError errors={state?.errors?.name} />
             </div>
           </div>
 
@@ -90,9 +90,7 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
               placeholder="Description"
             ></textarea>
             <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.description}
-              </span>
+              <FieldError errors={state?.errors?.description} />
             </div>
           </div>
 
@@ -112,15 +110,12 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
             ))}
 
             <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.amenities}
-              </span>
+              <FieldError errors={state?.errors?.amenities} />
             </div>
           </div>
         </div>
 
         <div className="col-span-4 bg-white p-4">
-          <input type="hidden" name="image" value={image} />
           <label
             htmlFor="input-file"
             className="flex flex-col mb-4 items-center
@@ -128,7 +123,7 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
                 cursor-pointer bg-gray-50 relative"
           >
             <div className="flex flex-col items-center justify-center text-gray-500 pt-5 pb-6 z-10">
-              {/* {pending ? <BarLoader /> : null} */}
+              {/* {pending ? <BarLoader/> :null} */}
               {image ? (
                 <button
                   type="button"
@@ -158,7 +153,6 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
                 onChange={handleUpload}
                 id="input-file"
                 className="hidden"
-                disabled={pending} // <-- Disable pas lagi upload
               />
             ) : (
               <Image
@@ -170,49 +164,6 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
               />
             )}
           </label>
-          <div aria-live="polite" aria-atomic="true">
-            <span className="text-sm text-red-500 mt-2">
-              {state?.error?.image}
-            </span>
-          </div>
-
-          <div className="mb-4">
-            <select
-              name="type"
-              className="py-2 px-4 rounded-sm border border-gray-400 w-full bg-white"
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Select Sport Type..
-              </option>
-              {Object.values(SportType).map((type) => (
-                <option key={type} value={type}>
-                  {type.replace(/_/g, " ").charAt(0).toUpperCase() +
-                    type.replace(/_/g, " ").slice(1).toLowerCase()}
-                </option>
-              ))}
-            </select>
-            <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.type}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <input
-              type="text"
-              name="address"
-              className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-              placeholder="Address.."
-            />
-            <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.address}
-              </span>
-            </div>
-          </div>
-
           <div className="mb-4">
             <input
               type="text"
@@ -221,41 +172,39 @@ const CreateForm = ({ amenities }: { amenities: Amenities[] }) => {
               placeholder="Capacity.."
             />
             <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.capacity}
-              </span>
+              <FieldError errors={state?.errors?.capacity} />
             </div>
           </div>
           <div className="mb-4">
             <input
               type="text"
-              name="pricePerHour"
+              name="price"
               className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-              placeholder="Price per Hour.."
+              placeholder="Price.."
             />
             <div aria-live="polite" aria-atomic="true">
-              <span className="text-sm text-red-500 mt-2">
-                {state?.error?.pricePerHour}
-              </span>
+              <FieldError errors={state?.errors?.price} />
             </div>
           </div>
-
           {/* General Message */}
           {state?.message ? (
-            <div className="mb-4 bg-red-200 p-2">
-              <span className="text-sm text-gray-700 mt-2">
-                {state.message}
-              </span>
+            <div
+              className={clsx("mb-4 p-2 rounded-sm", {
+                // Tambahin rounded-sm
+                "bg-red-200 text-gray-700": state.status === "error",
+                "bg-green-200 text-gray-700": state.status === "success",
+              })}
+            >
+              <span className="text-sm mt-2">{state.message}</span>
             </div>
           ) : null}
-
           <button
             type="submit"
             className={clsx(
-              "bg-primary text-white w-full hover:bg-primary/90 py-2.5 px-6 md:px-1 text-lg font-semibold cursor-pointer",
+              "bg-orange-400 text-white w-full hover:bg-orange-500 py-2.5 px-6 md:px-1 text-lg font-semibold cursor-pointer",
               { "opacity-50 cursor-progress": isPending }
             )}
-            disabled={isPending || pending}
+            disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
           </button>
