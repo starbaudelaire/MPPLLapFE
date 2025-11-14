@@ -1,4 +1,9 @@
 import type { Metadata } from "next";
+<<<<<<< HEAD
+=======
+
+import { Raleway } from "next/font/google";
+>>>>>>> 6b95ac595be896b665f0ca7ad6defc0fdd406e70
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
 import { SessionProvider } from "next-auth/react"; // <-- Tetep ada

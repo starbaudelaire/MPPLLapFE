@@ -7,6 +7,7 @@ generator client {
 }
 
 datasource db {
+<<<<<<< HEAD
   provider = "postgresql"
   // Ini otomatis ngambil dari .env elo, aman
   url      = env("POSTGRES_PRISMA_URL") 
@@ -56,6 +57,40 @@ model FieldAmenities {
 
   Field     Field     @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   Amenities Amenities @relation(fields: [amenitiesId], references: [id], onDelete: Cascade)
+=======
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+model Room {
+  id           String          @id @default(cuid())
+  name         String
+  description  String          @db.Text
+  image        String
+  price        Int
+  capacity     Int             @default(1)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  RoomAmenties RoomAmenties[]
+  Reservation  Reservation[]
+}
+
+model Amenities {
+  id           String         @id @default(cuid())
+  name         String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  RoomAmenties RoomAmenties[]
+}
+
+model RoomAmenties {
+  id          String    @id @default(cuid())
+  roomId      String
+  amenitiesId String
+  Room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  Amenities   Amenities @relation(fields: [amenitiesId], references: [id], onDelete: Cascade)
+>>>>>>> 6b95ac595be896b665f0ca7ad6defc0fdd406e70
 }
 
 model Reservation {
@@ -64,11 +99,18 @@ model Reservation {
   endDate   DateTime
   price     Int
   userId    String
+<<<<<<< HEAD
   fieldId   String // <-- Ganti dari roomId
 
   User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   Field   Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade) // <-- Ganti dari Room
   Payment Payment?
+=======
+  roomId    String
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  Payment   Payment?
+>>>>>>> 6b95ac595be896b665f0ca7ad6defc0fdd406e70
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -111,10 +153,29 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
+<<<<<<< HEAD
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+=======
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+// --- BARU DITAMBAHKAN ---
+// Model untuk nyimpen pesan dari contact form
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+>>>>>>> 6b95ac595be896b665f0ca7ad6defc0fdd406e70
 }

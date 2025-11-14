@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+=======
+
+import {auth} from "@/auth";
+import {prisma} from "@/lib/prisma";
+>>>>>>> 6b95ac595be896b665f0ca7ad6defc0fdd406e70
 
 export const getAmenities = async () => {
   // Lo ga perlu session di sini, data amenities itu publik
