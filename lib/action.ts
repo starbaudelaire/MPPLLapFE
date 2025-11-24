@@ -5,6 +5,8 @@
 import { FieldSchema } from "@/lib/zod"; // <-- Ganti RoomSchema jadi FieldSchema
 import { redirect } from "next/navigation";
 import { prisma } from "./prisma";
+import { ContactSchema } from "@/lib/zod";
+import { revalidatePath } from "next/cache";
 
 // Ganti nama fungsi dan parameternya
 export const saveField = async (
@@ -68,4 +70,30 @@ export const saveField = async (
     return { message: "Failed to create field." }; // <-- Kasih error message
   }
   redirect("/admin/field"); // <-- Ganti redirect
+};
+export const sendMessage = async (prevState: unknown, formData: FormData) => {
+  const validatedFields = ContactSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    await prisma.message.create({
+      data: {
+        name: validatedFields.data.name,
+        email: validatedFields.data.email,
+        subject: validatedFields.data.subject,
+        message: validatedFields.data.message,
+      },
+    });
+  } catch (error) {
+    return { message: "Failed to send message" };
+  }
+
+  return { message: "Message sent successfully!" };
 };

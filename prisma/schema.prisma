@@ -2,18 +2,15 @@
 
 generator client {
   provider = "prisma-client"
-  // Path output-nya kita arahin ke 'app' biar rapi
-  output   = "../app/generated/prisma" 
+  // JANGAN ADA baris 'output' disini!
 }
 
 datasource db {
-  provider = "postgresql"
-  // Ini otomatis ngambil dari .env elo, aman
-  url      = env("POSTGRES_PRISMA_URL") 
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
-// Enum baru dari repo 'master'
 enum SportType {
   FUTSAL
   BASKETBALL
@@ -22,18 +19,17 @@ enum SportType {
   TENNIS
 }
 
-// Model 'Room' diganti jadi 'Field'
 model Field {
-  id          String   @id @default(cuid())
-  name        String
-  description String   @db.Text
-  image       String
-  pricePerHour Int     // <-- Ganti dari price
-  capacity    Int      @default(1)
-  type        SportType // <-- Field baru
-  address     String?     // <-- Field baru
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  description  String   @db.Text
+  image        String
+  pricePerHour Int
+  capacity     Int      @default(1)
+  type         SportType
+  address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   FieldAmenities FieldAmenities[]
   Reservation    Reservation[]
@@ -48,7 +44,6 @@ model Amenities {
   FieldAmenities FieldAmenities[]
 }
 
-// Model 'RoomAmenties' jadi 'FieldAmenities'
 model FieldAmenities {
   id          String @id @default(cuid())
   fieldId     String
@@ -64,11 +59,12 @@ model Reservation {
   endDate   DateTime
   price     Int
   userId    String
-  fieldId   String // <-- Ganti dari roomId
+  fieldId   String
 
   User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Field   Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade) // <-- Ganti dari Room
+  Field   Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   Payment Payment?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -84,7 +80,6 @@ model Payment {
   Reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 }
 
-// Model User & Account (tetep sama, auth aman)
 model User {
   id            String        @id @default(cuid())
   name          String?
@@ -117,4 +112,13 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  createdAt DateTime @default(now())
 }
