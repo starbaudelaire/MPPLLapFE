@@ -23,7 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "D:\\mppl\\db_levi\\MPPLLapFE\\app\\generated\\prisma",
+      "value": "D:\\Kuliah\\Semester5\\ManajemenProyekPerangkatLunak\\30seplapang\\MPPLLapFE\\app\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -37,7 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\mppl\\db_levi\\MPPLLapFE\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\Kuliah\\Semester5\\ManajemenProyekPerangkatLunak\\30seplapang\\MPPLLapFE\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../../../prisma",

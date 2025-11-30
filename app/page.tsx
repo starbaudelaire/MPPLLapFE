@@ -1,24 +1,39 @@
 import Hero from "@/components/hero";
 import Main from "@/components/main";
+import SearchFilter from "@/components/home/search-filter";
 
-export default function Home() {
+// Page component di Next.js 13+ menerima props searchParams secara otomatis
+export default function Home({
+  searchParams,
+}: {
+  searchParams?: { query?: string; type?: string; location?: string };
+}) {
   return (
-    <div>
+    <main className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
       <Hero />
-      <div className="py-16 sm:py-24">
-        <div className="text-center max-w-7xl mx-auto px-4">
-          <h1 className="text-3xl font-bold tracking-tight text-lapang-dark">
-            Community Picks
-          </h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Find the spots currently trending in your area.
+
+      {/* Search Filter Section (Floating overlapping Hero) */}
+      <div className="px-4 sm:px-6 lg:px-8">
+        <SearchFilter />
+      </div>
+
+      {/* Main Content Section */}
+      <div className="py-12 sm:py-20">
+        <div className="text-center max-w-7xl mx-auto px-4 mb-12">
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Pilihan Komunitas
+          </h2>
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
+            Temukan lapangan terpopuler di sekitarmu minggu ini.
           </p>
         </div>
 
-        <div className="mt-16">
-          <Main />
+        {/* List Lapangan dengan Props Search Params */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Main searchParams={searchParams} />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

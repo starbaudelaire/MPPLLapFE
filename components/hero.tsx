@@ -3,36 +3,29 @@ import Link from "next/link";
 
 const Hero = () => {
   return (
-    <div className="relative h-screen text-white overflow-hidden">
-      <div className="absoluter inset-0">
+    <div className="relative h-[85vh] text-white overflow-hidden">
+      {/* Background Image dengan Overlay Gradient agar teks terbaca */}
+      <div className="absolute inset-0">
         <Image
-          src="/well-2.png"
-          alt="hero image"
+          src="/hero.jpg" // Pastikan gambar ini ada di folder public Anda atau gunakan yang ada
+          alt="Sports Field Hero"
           fill
-          className="object-cover object-center w-full h-full"
+          className="object-cover object-center"
+          priority
         />
+        {/* Gradient Overlay: Penting untuk keterbacaan teks di atas gambar apapun */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent" />
       </div>
-      <div className="relative flex flex-col justify-center items-center h-full text-center">
-        <h1 className="text-6xl font-semibold leading-tight mb-2 capitalize">
-          Secure Your Field
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col justify-center items-center h-full text-center px-4 max-w-5xl mx-auto pb-16">
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-md">
+          Temukan Lapangan,<br />
+          <span className="text-[#f64e42]">Mulai Permainan.</span>
         </h1>
-        <p className="text-3xl font-normal mb-6">
-          A step closer to your perfect game.
+        <p className="text-lg md:text-2xl text-gray-200 mb-8 max-w-2xl drop-shadow-sm font-light">
+          Booking lapangan futsal, basket, hingga mini soccer dengan mudah dan cepat.
         </p>
-        <div className="flex gap-5">
-          <Link
-            href="/room"
-            className="bg-[#f64e42] text-white hover:bg-[#f64e42]/90 py-2.5 px-6 md:px-7 text-lg font-normal hover:scale-105 hover:shadow-lg rounded-full"
-          >
-            Start Now
-          </Link>
-          <Link
-            href="/contact"
-            className="bg-transparent border border-white text-white hover:bg-white/10 py-2.5 px-6 md:px-7 text-lg font-normal hover:scale-105 hover:shadow-lg rounded-full"
-          >
-            Contact Us
-          </Link>
-        </div>
       </div>
     </div>
   );
