@@ -69,3 +69,37 @@ export const saveField = async (
   }
   redirect("/admin/field"); // <-- Ganti redirect
 };
+
+// lib/action.ts
+
+// ... (kode saveField yang lama biarin aja) ...
+
+import { revalidatePath } from "next/cache"; // <-- Jangan lupa import ini di atas!
+
+export const updateReservationStatus = async (
+  formData: FormData
+) => {
+  const reservationId = formData.get("reservationId") as string;
+  const newStatus = formData.get("status") as string;
+
+  if (!reservationId || !newStatus) return;
+
+  try {
+    // Kita update status Payment yang nyambung sama Reservasi ini
+    await prisma.payment.update({
+      where: {
+        reservationId: reservationId, // Cari payment berdasarkan ID reservasi
+      },
+      data: {
+        status: newStatus,
+      },
+    });
+
+    // Ini magic-nya: kasih tau Next.js buat refresh halaman dashboard
+    revalidatePath("/admin/dashboard");
+    
+  } catch (error) {
+    console.log("Gagal update status:", error);
+    // In real world, lo mungkin mau return error message ke UI
+  }
+};
