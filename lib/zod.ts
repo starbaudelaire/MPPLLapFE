@@ -11,3 +11,10 @@ export const FieldSchema = object({
   type: nativeEnum(SportType), // <-- tambah
   amenities: array(string()).nonempty(), // <-- amenities dari repo lama
 });
+
+export const ContactSchema = object({
+  name: string().min(3, "Name must be at least 3 characters"),
+  email: string().email("Invalid email address"),
+  subject: string().optional(),
+  message: string().min(10, "Message must be at least 10 characters"),
+});

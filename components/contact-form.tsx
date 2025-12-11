@@ -1,58 +1,70 @@
+// components/contact-form.tsx
+"use client";
+
+import { useActionState } from "react"; // Next.js 16 pake ini
+import { sendMessage } from "@/lib/action";
+
 const ContactForm = () => {
+  const [state, formAction, isPending] = useActionState(sendMessage, null);
+
   return (
     <div className="bg-white p-8 rounded-2xl shadow-md">
-      <form action="">
+      {state?.message && (
+        <div
+          className={`p-4 mb-4 text-sm rounded-lg ${
+            state.message.includes("success")
+              ? "bg-green-100 text-green-700"
+              : "bg-red-100 text-red-700"
+          }`}
+        >
+          {state.message}
+        </div>
+      )}
+
+      <form action={formAction}>
         <div className="grid md:grid-cols-2 gap-6 mt-6">
           <div>
             <input
-              type="text"
               name="name"
-              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full font-light"
+              type="text"
               placeholder="Name"
+              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full"
             />
-            <div aria-live="polite" aria-atomic="true">
-              <p className="text-sm text-red-500 mt-2"></p>
-            </div>
+            <p className="text-red-500 text-xs mt-1">{state?.error?.name}</p>
           </div>
           <div>
             <input
-              type="email"
               name="email"
-              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full font-light"
-              placeholder="email@example.com"
+              type="email"
+              placeholder="Email"
+              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full"
             />
-            <div aria-live="polite" aria-atomic="true">
-              <p className="text-sm text-red-500 mt-2"></p>
-            </div>
+            <p className="text-red-500 text-xs mt-1">{state?.error?.email}</p>
           </div>
           <div className="md:col-span-2">
             <input
-              type="text"
               name="subject"
-              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full font-light"
+              type="text"
               placeholder="Subject"
+              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full"
             />
-            <div aria-live="polite" aria-atomic="true">
-              <p className="text-sm text-red-500 mt-2"></p>
-            </div>
           </div>
           <div className="md:col-span-2">
             <textarea
-              name="messgae"
+              name="message"
               rows={5}
-              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full font-light"
               placeholder="Your Message"
+              className="bg-gray-50 p-3 border border-gray-200 rounded-md w-full"
             ></textarea>
-            <div aria-live="polite" aria-atomic="true">
-              <p className="text-sm text-red-500 mt-2"></p>
-            </div>
+            <p className="text-red-500 text-xs mt-1">{state?.error?.message}</p>
           </div>
         </div>
         <button
           type="submit"
-          className="px-10 py-3 mt-6 text-center font-semibold text-white w-full bg-[#f64e42] rounded-md hover:bg-[#f64e42]/90 cursor-pointer"
+          disabled={isPending}
+          className="px-10 py-3 mt-6 w-full bg-[#f64e42] text-white rounded-md hover:bg-[#f64e42]/90 disabled:opacity-50"
         >
-          Send Message
+          {isPending ? "Sending..." : "Send Message"}
         </button>
       </form>
     </div>

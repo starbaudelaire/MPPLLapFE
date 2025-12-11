@@ -3,13 +3,13 @@
 generator client {
   provider = "prisma-client"
   // Path output-nya kita arahin ke 'app' biar rapi
-  output   = "../app/generated/prisma" 
+  output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   // Ini otomatis ngambil dari .env elo, aman
-  url      = env("POSTGRES_PRISMA_URL") 
+  url      = env("POSTGRES_PRISMA_URL")
   directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
@@ -117,4 +117,12 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+}
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  createdAt DateTime @default(now())
 }

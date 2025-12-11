@@ -53,7 +53,7 @@ const Navbar = () => {
             Home
           </Link>
           <Link
-            href="/lapangan"
+            href="/field"
             className="font-light text-sm text-white hover:text-primary"
           >
             Fields
@@ -165,7 +165,7 @@ const Navbar = () => {
         <div className="flex md:hidden justify-between items-center">
           <Link href="/">
             <Image
-              src="/lapangin.png"
+              src="/lapang-in.png"
               width={32}
               height={32}
               alt="logo"
@@ -204,7 +204,7 @@ const Navbar = () => {
           </li>
           <li>
             <Link
-              href="/lapangan"
+              href="/field"
               className="block py-2 px-3 hover:text-primary"
               onClick={() => setOpen(false)}
             >

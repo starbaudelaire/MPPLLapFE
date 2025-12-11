@@ -79,3 +79,8 @@ export type User = Prisma.UserModel
  * 
  */
 export type Account = Prisma.AccountModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel
