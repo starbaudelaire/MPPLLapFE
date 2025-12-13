@@ -1,71 +1,135 @@
-// lib/action.ts
+"use server";
 
-"use server"; // <-- Tambahin "use server" di atas
-
-import { FieldSchema } from "@/lib/zod"; // <-- Ganti RoomSchema jadi FieldSchema
+import { FieldSchema } from "@/lib/zod";
+import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { prisma } from "./prisma";
+import { revalidatePath } from "next/cache";
 
-// Ganti nama fungsi dan parameternya
-export const saveField = async (
-  image: string,
-  prevState: unknown,
-  formData: FormData
-) => {
-  if (!image) return { message: "Image is Required." };
-
-  // Sesuaikan sama field baru
+// --- 1. SAVE FIELD (CREATE) ---
+export const saveField = async (_prevState: unknown, formData: FormData) => {
+  const amenitiesIds = formData.getAll("amenities") as string[];
+  
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
+    address: formData.get("address"),
     capacity: formData.get("capacity"),
-    pricePerHour: formData.get("pricePerHour"), // <-- Ganti
-    amenities: formData.getAll("amenities"),
-    image: image, // <-- Tambah
-    address: formData.get("address"), // <-- Tambah
-    type: formData.get("type"), // <-- Tambah
+    pricePerHour: formData.get("pricePerHour"),
+    type: formData.get("type"),
+    image: formData.get("image"),
+    amenities: amenitiesIds,
   };
 
-  const validateFields = FieldSchema.safeParse(rawData); // <-- Ganti
-  if (!validateFields.success) {
-    return { error: validateFields.error.flatten().fieldErrors };
+  const validatedFields = FieldSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Create Field.",
+    };
   }
 
-  // Destructure data baru
-  const {
-    name,
-    description,
-    pricePerHour,
-    capacity,
-    amenities,
-    address,
-    type,
-  } = validateFields.data;
+  const { name, description, address, capacity, pricePerHour, type, image, amenities } = validatedFields.data;
 
   try {
-    // Ganti prisma.room.create jadi prisma.field.create
     await prisma.field.create({
       data: {
         name,
         description,
-        image,
-        pricePerHour, // <-- Ganti
+        address,
         capacity,
-        address, // <-- Tambah
-        type, // <-- Tambah
+        pricePerHour,
+        type,
+        image,
         FieldAmenities: {
-          // <-- Ganti RoomAmenties
-          createMany: {
-            data: amenities.map((item) => ({
-              amenitiesId: item,
-            })),
-          },
+            create: amenities?.map((amenityId) => ({
+                amenitiesId: amenityId
+            }))
+        }
+      },
+    });
+  } catch (error) {
+    console.error("Database Error:", error);
+    return { message: "Database Error: Failed to Create Field." };
+  }
+
+  revalidatePath("/admin/field");
+  redirect("/admin/field");
+};
+
+// --- 2. DELETE FIELD ---
+export const deleteField = async (id: string) => {
+  try {
+    await prisma.field.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Failed to delete field:", error);
+    return { message: "Database Error: Failed to Delete Field." };
+  }
+  revalidatePath("/admin/field");
+};
+
+// --- 3. UPDATE FIELD (BARU!) ---
+export const updateField = async (id: string, _prevState: unknown, formData: FormData) => {
+  const amenitiesIds = formData.getAll("amenities") as string[];
+
+  const rawData = {
+    name: formData.get("name"),
+    description: formData.get("description"),
+    address: formData.get("address"),
+    capacity: formData.get("capacity"),
+    pricePerHour: formData.get("pricePerHour"),
+    type: formData.get("type"),
+    image: formData.get("image"),
+    amenities: amenitiesIds,
+  };
+
+  const validatedFields = FieldSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Field.",
+    };
+  }
+
+  const {
+    name,
+    description,
+    address,
+    capacity,
+    pricePerHour,
+    type,
+    image,
+    amenities,
+  } = validatedFields.data;
+
+  try {
+    await prisma.field.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        address,
+        capacity,
+        pricePerHour,
+        type,
+        image,
+        // Reset fasilitas: Hapus semua relasi lama, tambah yang baru
+        FieldAmenities: {
+          deleteMany: {}, 
+          create: amenities?.map((amenityId) => ({
+            amenitiesId: amenityId,
+          })),
         },
       },
     });
   } catch (error) {
-    console.log(error);
-    return { message: "Failed to create field." }; // <-- Kasih error message
+    console.error("Database Error:", error);
+    return { message: "Database Error: Failed to Update Field." };
   }
-  redirect("/admin/field"); // <-- Ganti redirect
+
+  revalidatePath("/admin/field");
+  redirect("/admin/field");
 };

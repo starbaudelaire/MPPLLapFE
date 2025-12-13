@@ -23,7 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "D:\\mppl\\db_levi\\MPPLLapFE\\app\\generated\\prisma",
+      "value": "D:\\MPPL\\projectdev2\\MPPLLapFE\\app\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -37,12 +37,12 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\mppl\\db_levi\\MPPLLapFE\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\MPPL\\projectdev2\\MPPLLapFE\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../../../prisma",
-  "clientVersion": "6.19.0",
-  "engineVersion": "2ba551f319ab1df4bc874a89965d8b3641056773",
+  "clientVersion": "6.19.1",
+  "engineVersion": "c2990dca591cba766e3b7ef5d9e8a84796e47ab7",
   "datasourceNames": [
     "db"
   ],

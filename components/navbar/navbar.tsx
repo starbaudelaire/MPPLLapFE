@@ -1,8 +1,6 @@
-// components/navbar/navbar.tsx (FIXED)
-
 "use client";
 
-import { useState, useRef, useEffect } from "react"; // <-- Import hook baru
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { IoClose, IoMenu, IoPersonOutline } from "react-icons/io5";
@@ -11,12 +9,11 @@ import { useSession, signOut } from "next-auth/react";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false); // Mobile menu
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // <-- State baru buat dropdown
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { data: session } = useSession();
 
-  const profileMenuRef = useRef<HTMLDivElement>(null); // <-- Ref buat deteksi klik di luar
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  // Effect buat nutup dropdown kalo klik di luar
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -52,8 +49,9 @@ const Navbar = () => {
           >
             Home
           </Link>
+          {/* 👇 PERBAIKAN 1: Arahin Fields ke halaman Admin lo */}
           <Link
-            href="/lapangan"
+            href="/admin/field"
             className="font-light text-sm text-white hover:text-primary"
           >
             Fields
@@ -98,34 +96,28 @@ const Navbar = () => {
             Contact
           </Link>
 
-          {/* === INI BAGIAN YANG DIGANTI (AUTH DESKTOP) === */}
+          {/* Auth Desktop */}
           <div className="relative" ref={profileMenuRef}>
-            {" "}
-            {/* <-- Wrapper + Ref */}
             {session ? (
-              // Kalo udah Login
               <>
                 <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)} // <-- Toggle dropdown
+                  onClick={() => setIsProfileOpen(!isProfileOpen)}
                   className="flex text-sm rounded-full focus:ring-4 focus:ring-gray-300/50"
                 >
                   <span className="sr-only">Open user menu</span>
                   <Image
                     className="size-8 rounded-full"
-                    src={session.user.image || "/avatar.svg"} // <-- Pake foto profil
+                    src={session.user.image || "/avatar.svg"}
                     width={32}
                     height={32}
                     alt="avatar"
                   />
                 </button>
 
-                {/* Dropdown Menu */}
                 <div
                   className={clsx(
                     "absolute right-0 z-50 my-2 w-48 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow",
-                    {
-                      hidden: !isProfileOpen, // <-- Toggle pake state
-                    }
+                    { hidden: !isProfileOpen }
                   )}
                 >
                   <div className="px-4 py-3">
@@ -136,11 +128,11 @@ const Navbar = () => {
                       {session.user.email}
                     </span>
                   </div>
-                  <ul className="py-2" aria-labelledby="user-menu-button">
+                  <ul className="py-2">
                     <li>
                       <button
                         onClick={() => {
-                          setIsProfileOpen(false); // <-- Tutup dropdown
+                          setIsProfileOpen(false);
                           signOut();
                         }}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -152,20 +144,18 @@ const Navbar = () => {
                 </div>
               </>
             ) : (
-              // Kalo BELUM Login
               <Link href="/signin">
                 <IoPersonOutline className="size-5 text-white hover:text-primary" />
               </Link>
             )}
           </div>
-          {/* === BATAS AKHIR BAGIAN YANG DIGANTI === */}
         </div>
 
         {/* --- Versi Mobile (Logo + Tombol Menu) --- */}
         <div className="flex md:hidden justify-between items-center">
           <Link href="/">
             <Image
-              src="/lapangin.png"
+              src="/lapang-in.png" // Typo fix: lapangin.png -> lapang-in.png (cek public folder lo kalo masi error gambar)
               width={32}
               height={32}
               alt="logo"
@@ -176,11 +166,7 @@ const Navbar = () => {
             onClick={() => setOpen(!open)}
             className="inline-flex items-center p-2 justify-center text-sm rounded-md text-white hover:bg-black/10"
           >
-            {!open ? (
-              <IoMenu className="size-8" />
-            ) : (
-              <IoClose className="size-8" />
-            )}
+            {!open ? <IoMenu className="size-8" /> : <IoClose className="size-8" />}
           </button>
         </div>
       </div>
@@ -203,8 +189,9 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
+            {/* 👇 PERBAIKAN 2: Mobile juga arahin ke Admin */}
             <Link
-              href="/lapangan"
+              href="/admin/field"
               className="block py-2 px-3 hover:text-primary"
               onClick={() => setOpen(false)}
             >
@@ -267,7 +254,6 @@ const Navbar = () => {
             </Link>
           </li>
 
-          {/* === INI BAGIAN YANG DIGANTI (AUTH MOBILE) === */}
           <li className="border-t border-gray-200 my-2"></li>
           {session ? (
             <>
@@ -284,7 +270,7 @@ const Navbar = () => {
               <li>
                 <button
                   onClick={() => {
-                    setOpen(false); // Tutup menu mobile
+                    setOpen(false);
                     signOut();
                   }}
                   className="block w-full text-left py-2 px-3 text-red-600 hover:bg-gray-100"
@@ -304,7 +290,6 @@ const Navbar = () => {
               </Link>
             </li>
           )}
-          {/* === BATAS AKHIR BAGIAN YANG DIGANTI (MOBILE) === */}
         </ul>
       </div>
     </div>
