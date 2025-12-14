@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/auth";
 import { FieldSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
@@ -198,7 +199,11 @@ function generateInvoiceCode() {
 
 // ACTION: Create Reservation
 export const createReservation = async (formData: FormData) => {
-  const userId = formData.get("userId") as string;
+  const session = await auth();
+  if (!session?.user?.id) return { error: "Login dulu bos!" };
+  const userId = session.user.id;
+  
+  // const userId = formData.get("userId") as string;
   const fieldId = formData.get("fieldId") as string;
   const startDateStr = formData.get("startDate") as string;
   const endDateStr = formData.get("endDate") as string;

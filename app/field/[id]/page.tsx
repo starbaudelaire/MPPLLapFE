@@ -2,9 +2,9 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getFieldById } from "@/lib/data";
 import BookingCard from "@/components/field/booking-card";
-import { MapPinIcon, TrophyIcon } from "@heroicons/react/24/outline";
+import { MapPinIcon } from "@heroicons/react/24/outline";
+import { auth } from "@/auth"; // 👈 1. IMPORT AUTH
 
-// Helper sederhana untuk Badge tipe olahraga
 const SportBadge = ({ type }: { type: string }) => {
   const colors: Record<string, string> = {
     FUTSAL: "bg-blue-100 text-blue-800",
@@ -20,8 +20,17 @@ const SportBadge = ({ type }: { type: string }) => {
   );
 };
 
-export default async function FieldDetailPage({ params }: { params: { id: string } }) {
-  const field = await getFieldById(params.id);
+export default async function FieldDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  
+  // 👇 2. AMBIL SESSION DI SERVER
+  const session = await auth(); 
+  
+  const field = await getFieldById(id);
 
   if (!field) {
     notFound();
@@ -32,7 +41,7 @@ export default async function FieldDetailPage({ params }: { params: { id: string
       {/* 1. Hero Image Section */}
       <div className="relative w-full h-[40vh] md:h-[50vh] bg-gray-900">
         <Image
-          src={field.image || "/hero.jpg"} // Fallback image jika kosong
+          src={field.image || "/hero.jpg"}
           alt={field.name}
           fill
           className="object-cover opacity-90"
@@ -62,17 +71,13 @@ export default async function FieldDetailPage({ params }: { params: { id: string
           
           {/* Left Column: Details (2/3 width) */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Description Card */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Tentang Lapangan</h2>
-              <div 
-                className="prose prose-sm max-w-none text-gray-600 leading-relaxed whitespace-pre-line"
-              >
+              <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed whitespace-pre-line">
                 {field.description}
               </div>
             </div>
 
-            {/* Amenities Card */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Fasilitas</h2>
               {field.FieldAmenities.length > 0 ? (
@@ -97,6 +102,8 @@ export default async function FieldDetailPage({ params }: { params: { id: string
             <BookingCard 
                 pricePerHour={field.pricePerHour} 
                 fieldId={field.id}
+                // 👇 3. LEMPAR ID USER KE SINI BRE!
+                userId={session?.user?.id} 
             />
           </div>
 
