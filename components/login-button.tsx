@@ -1,9 +1,12 @@
+// components/login-button.tsx
+
 import { FaG } from "react-icons/fa6";
 import { signIn } from "@/auth";
 
 async function handleSignIn() {
   "use server";
-  await signIn("google");
+  // Nah, di sini kuncinya bro. Kita arahin ke route pengecekan.
+  await signIn("google", { redirectTo: "/auth-check" });
 }
 
 export const LoginGoogleButton = () => {

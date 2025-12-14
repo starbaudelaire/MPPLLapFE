@@ -1,31 +1,22 @@
 "use client";
 
-import { useState } from "react";
-// Import Server Action yang udah kita gabungin di action.ts
-import { createReservation } from "@/lib/action";
+import { useState, useEffect } from "react";
+// UPDATE IMPORT INI: Ambil getBookedHours dari action, bukan data
+import { createReservation, getBookedHours } from "@/lib/action";
 
-// Jam operasional dummy
+// ... (Sisa kodingan ke bawah SAMA PERSIS kayak yang tadi gua kasih)
+// Biar aman copas full aja nih:
+
 const TIME_SLOTS = [
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
+  "08:00", "09:00", "10:00", "11:00", "12:00",
+  "13:00", "14:00", "15:00", "16:00", "17:00",
+  "18:00", "19:00", "20:00", "21:00", "22:00"
 ];
 
 interface BookingCardProps {
   pricePerHour: number;
   fieldId: string;
-  userId?: string; // Tambahin ini biar bisa nerima ID user yg login
+  userId?: string; 
 }
 
 export default function BookingCard({
@@ -35,10 +26,31 @@ export default function BookingCard({
 }: BookingCardProps) {
   const [date, setDate] = useState("");
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
-  const [isBooking, setIsBooking] = useState(false); // Buat loading state
+  
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
 
-  // Handle pilih jam (toggle selection)
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (date) {
+        setLoadingSlots(true);
+        setSelectedTimes([]); 
+        
+        // Sekarang ini manggil Server Action, aman buat Client Component
+        const booked = await getBookedHours(fieldId, date);
+        setBookedSlots(booked);
+        
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchBookedSlots();
+  }, [date, fieldId]);
+
   const handleTimeClick = (time: string) => {
+    if (bookedSlots.includes(time)) return;
+
     if (selectedTimes.includes(time)) {
       setSelectedTimes(selectedTimes.filter((t) => t !== time));
     } else {
@@ -55,38 +67,27 @@ export default function BookingCard({
 
     setIsBooking(true);
 
-    // Kita cari jam paling awal (start) dan jam paling akhir (end) dari pilihan user
-    // Note: Logic ini sederhana (asumsi jamnya urut/bersambung).
-    // Kalo mau canggih, harus divalidasi biar jamnya gak loncat-loncat.
     const sortedTimes = [...selectedTimes].sort();
     const startTimeStr = sortedTimes[0];
-    // End time itu jam terakhir + 1 jam (misal main jam 10:00 - 11:00, berarti end-nya 11:00)
-    const endTimeStr = sortedTimes[sortedTimes.length - 1];
-
-    // Konversi jam string (08:00) jadi angka buat nambahin durasi
-    const endHour = parseInt(endTimeStr.split(":")[0]) + 1;
+    
+    const lastTimeStr = sortedTimes[sortedTimes.length - 1];
+    const lastHour = parseInt(lastTimeStr.split(":")[0]);
+    const endHour = lastHour + 1;
     const formattedEndTime = `${endHour < 10 ? "0" + endHour : endHour}:00`;
 
-    // Bikin FormData manual buat dikirim ke Server Action
     const formData = new FormData();
     formData.append("fieldId", fieldId);
     formData.append("userId", userId);
-
-    // Gabungin Tanggal + Jam jadi format ISO Date lengkap
-    // Contoh: 2025-12-12T08:00:00.000Z
-    formData.append("startDate", `${date}T${startTimeStr}:00.000Z`);
-    formData.append("endDate", `${date}T${formattedEndTime}:00.000Z`);
-
+    formData.append("startDate", `${date}T${startTimeStr}`);
+    formData.append("endDate", `${date}T${formattedEndTime}`);
     formData.append("price", totalPrice.toString());
 
-    // Panggil Server Action 'createReservation' dari lib/action.ts
     const result = await createReservation(formData);
 
     if (result?.error) {
-      alert(result.error); // Munculin error kalo gagal (misal udah dibooking)
+      alert(result.error); 
       setIsBooking(false);
     }
-    // Kalo sukses, dia bakal redirect otomatis dari server action, jadi gak perlu ngapa-ngapain.
   };
 
   return (
@@ -100,7 +101,6 @@ export default function BookingCard({
         </div>
       </div>
 
-      {/* 1. Pilih Tanggal */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Pilih Tanggal Main
@@ -113,34 +113,62 @@ export default function BookingCard({
         />
       </div>
 
-      {/* 2. Pilih Jam (Grid Layout) */}
       <div className="mb-8">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Pilih Jam Kosong
+        <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-2">
+          <span>Pilih Jam Kosong</span>
+          {loadingSlots && <span className="text-xs text-[#f64e42] animate-pulse">Cek jadwal...</span>}
         </label>
+        
         <div className="grid grid-cols-4 gap-2">
-          {TIME_SLOTS.map((time) => (
-            <button
-              key={time}
-              onClick={() => handleTimeClick(time)}
-              className={`text-sm py-2 rounded-md border transition-all ${
-                selectedTimes.includes(time)
-                  ? "bg-[#f64e42] text-white border-[#f64e42]"
-                  : "bg-white text-gray-600 border-gray-200 hover:border-[#f64e42] hover:text-[#f64e42]"
-              }`}
-            >
-              {time}
-            </button>
-          ))}
+          {TIME_SLOTS.map((time) => {
+            const isBooked = bookedSlots.includes(time);
+            const isSelected = selectedTimes.includes(time);
+
+            return (
+              <button
+                key={time}
+                onClick={() => handleTimeClick(time)}
+                disabled={isBooked}
+                className={`
+                  text-sm py-2 rounded-md border transition-all relative overflow-hidden
+                  ${
+                    isBooked
+                      ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                      : isSelected
+                      ? "bg-[#f64e42] text-white border-[#f64e42] shadow-md transform scale-105"
+                      : "bg-white text-gray-600 border-gray-200 hover:border-[#f64e42] hover:text-[#f64e42]"
+                  }
+                `}
+              >
+                {time}
+                {isBooked && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-full h-[1px] bg-gray-300 rotate-45 transform"></div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
+
+        <div className="flex gap-4 mt-3 text-[10px] text-gray-500">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div> 
+            Full Booked
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-[#f64e42] rounded"></div> 
+            Pilihanmu
+          </div>
+        </div>
+
         {selectedTimes.length > 0 && (
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-gray-500 mt-2 font-medium">
             {selectedTimes.length} jam dipilih
           </p>
         )}
       </div>
 
-      {/* 3. Total & Action */}
       <div className="border-t pt-4">
         <div className="flex justify-between items-center mb-4">
           <span className="font-semibold text-gray-900">Total</span>

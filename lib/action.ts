@@ -7,10 +7,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 // ==========================================
-// SECTION 1: ADMIN CRUD FIELD (Dev 2)
+// SECTION 1: ADMIN CRUD FIELD
 // ==========================================
 
-// --- 1. SAVE FIELD (CREATE) ---
 export const saveField = async (_prevState: unknown, formData: FormData) => {
   const amenitiesIds = formData.getAll("amenities") as string[];
 
@@ -71,7 +70,6 @@ export const saveField = async (_prevState: unknown, formData: FormData) => {
   redirect("/admin/field");
 };
 
-// --- 2. DELETE FIELD ---
 export const deleteField = async (id: string) => {
   try {
     await prisma.field.delete({
@@ -84,7 +82,6 @@ export const deleteField = async (id: string) => {
   revalidatePath("/admin/field");
 };
 
-// --- 3. UPDATE FIELD ---
 export const updateField = async (
   id: string,
   _prevState: unknown,
@@ -152,10 +149,9 @@ export const updateField = async (
 };
 
 // ==========================================
-// SECTION 2: BOOKING ENGINE (Dev 1)
+// SECTION 2: BOOKING ENGINE
 // ==========================================
 
-// Helper 1: Cek jadwal bentrok
 async function checkAvailability(
   fieldId: string,
   startDate: Date,
@@ -190,27 +186,39 @@ async function checkAvailability(
   return !existingReservation;
 }
 
-// Helper 2: Bikin Kode Invoice
-function generateInvoiceCode() {
-  const date = new Date();
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `INV-${date.toISOString().slice(0, 10).replace(/-/g, "")}-${random}`;
-}
+// Helper Parsing WIB
+const parseWIB = (str: string) => {
+  if (!str) return null;
+  const parts = str.split("T");
+  if (parts.length < 2) return null;
 
-// ACTION: Create Reservation
+  const datePart = parts[0];
+  const timePart = parts[1];
+
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  if (isNaN(year) || isNaN(hour)) return null;
+
+  return new Date(Date.UTC(year, month - 1, day, hour - 7, minute, 0));
+};
+
 export const createReservation = async (formData: FormData) => {
   const session = await auth();
   if (!session?.user?.id) return { error: "Login dulu bos!" };
   const userId = session.user.id;
   
-  // const userId = formData.get("userId") as string;
   const fieldId = formData.get("fieldId") as string;
   const startDateStr = formData.get("startDate") as string;
   const endDateStr = formData.get("endDate") as string;
   const totalAmount = Number(formData.get("price"));
 
-  const startDate = new Date(startDateStr);
-  const endDate = new Date(endDateStr);
+  const startDate = parseWIB(startDateStr);
+  const endDate = parseWIB(endDateStr);
+
+  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return { error: "Format tanggal ngaco nih! Coba refresh." };
+  }
 
   const isAvailable = await checkAvailability(fieldId, startDate, endDate);
 
@@ -245,7 +253,6 @@ export const createReservation = async (formData: FormData) => {
     });
 
     newReservationId = result.id;
-    console.log(`Booking Sukses! ID: ${newReservationId}`);
   } catch (error) {
     console.error("Booking Failed:", error);
     return { error: "Sistem error nih, gagal booking." };
@@ -256,7 +263,7 @@ export const createReservation = async (formData: FormData) => {
 };
 
 // ==========================================
-// SECTION 3: ADMIN DASHBOARD ACTIONS (Dev 4)
+// SECTION 3: ADMIN DASHBOARD ACTIONS
 // ==========================================
 
 export const updateReservationStatus = async (formData: FormData) => {
@@ -266,19 +273,60 @@ export const updateReservationStatus = async (formData: FormData) => {
   if (!reservationId || !newStatus) return;
 
   try {
-    // Update status Payment
     await prisma.payment.update({
-      where: {
-        reservationId: reservationId,
-      },
-      data: {
-        status: newStatus,
-      },
+      where: { reservationId: reservationId },
+      data: { status: newStatus },
     });
-
-    // Refresh data dashboard biar admin langsung liat perubahannya
     revalidatePath("/admin/dashboard");
   } catch (error) {
     console.error("Gagal update status:", error);
+  }
+};
+
+// ==========================================
+// SECTION 4: CLIENT DATA FETCHERS (NEW)
+// (Ini yang kita pindahin dari lib/data.ts)
+// ==========================================
+
+export const getBookedHours = async (fieldId: string, dateStr: string) => {
+  if (!dateStr || !fieldId) return [];
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  
+  // Start: Jam 00:00 WIB (UTC-7)
+  const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
+  
+  // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
+  const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
+
+  try {
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        fieldId: fieldId,
+        startDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        OR: [
+          { Payment: { status: "PAID" } },
+          { Payment: { status: "UNPAID" } },
+        ],
+      },
+      select: {
+        startDate: true,
+      },
+    });
+
+    const bookedHours = reservations.map((res) => {
+      // Convert UTC DB ke WIB Display
+      const dateInWIB = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
+      const hour = dateInWIB.getUTCHours();
+      return `${hour.toString().padStart(2, "0")}:00`;
+    });
+
+    return bookedHours;
+  } catch (error) {
+    console.error("Gagal ambil jadwal booked:", error);
+    return [];
   }
 };

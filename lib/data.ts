@@ -76,10 +76,21 @@ export const getUserReservations = async () => {
 // SECTION 2: ADMIN DASHBOARD DATA (Dev 4)
 // ==========================================
 
-// 4. Hitung Pendapatan Hari Ini (PAID only)
+// 4. Hitung Pendapatan Hari Ini (FIXED WIB VERSION)
 export const getTodayRevenue = async () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Set ke jam 00:00 hari ini
+  // Trik: Kita geser waktu server (UTC) ke WIB dulu buat nentuin "Hari ini tanggal berapa"
+  const now = new Date();
+  const offsetWIB = 7 * 60 * 60 * 1000; // 7 Jam dalam milisecond
+  
+  // Ini waktu "sekarang" seolah-olah kita di Jakarta
+  const nowWIB = new Date(now.getTime() + offsetWIB);
+  
+  // Set jam 00:00:00 WIB
+  nowWIB.setUTCHours(0, 0, 0, 0);
+
+  // Balikin lagi ke UTC biar query DB-nya bener
+  // Jadi kalo di Indo tgl 15 jam 00:00, di DB kita cari data mulai tgl 14 jam 17:00 UTC
+  const startOfDayUTC = new Date(nowWIB.getTime() - offsetWIB);
 
   try {
     const result = await prisma.payment.aggregate({
@@ -87,7 +98,7 @@ export const getTodayRevenue = async () => {
       where: {
         status: "PAID",
         createdAt: {
-          gte: today, // Dari jam 00:00 hari ini ke atas
+          gte: startOfDayUTC, // <-- Pake waktu yang udah dikoreksi
         },
       },
     });
@@ -97,7 +108,7 @@ export const getTodayRevenue = async () => {
   }
 };
 
-// 5. Total Booking (FIXED NAME: getTotalBookings -> getTotalBooking)
+// 5. Total Booking
 export const getTotalBooking = async () => {
   try {
     const count = await prisma.reservation.count();
@@ -107,7 +118,7 @@ export const getTotalBooking = async () => {
   }
 };
 
-// 6. Lapangan Aktif (FIXED NAME: getActiveFields -> getTotalActiveFields)
+// 6. Lapangan Aktif
 export const getTotalActiveFields = async () => {
   try {
     const count = await prisma.field.count();
@@ -131,6 +142,62 @@ export const getAllReservations = async () => {
     return reservations;
   } catch (error) {
     console.error("Error admin reservations:", error);
+    return [];
+  }
+};
+
+// lib/data.ts
+
+// ... (Kodingan atas biarin sama)
+
+// ==========================================
+// SECTION 3: BOOKING HELPERS (NEW)
+// ==========================================
+
+export const getBookedHours = async (fieldId: string, dateStr: string) => {
+  if (!dateStr || !fieldId) return [];
+
+  // 1. Tentukan Range Jam 00:00 - 23:59 WIB pada tanggal tersebut
+  const [year, month, day] = dateStr.split("-").map(Number);
+  
+  // Start: Jam 00:00 WIB (UTC-7)
+  const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
+  
+  // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
+  const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
+
+  try {
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        fieldId: fieldId,
+        startDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        OR: [
+          { Payment: { status: "PAID" } }, // Yang udah bayar
+          { Payment: { status: "UNPAID" } }, // Yang booking tapi belum bayar (masih nunggu)
+        ],
+      },
+      select: {
+        startDate: true,
+      },
+    });
+
+    // 2. Ambil jam-nya aja dari data reservasi
+    // Kita convert balik ke jam WIB (Human Readable) buat dikirim ke Frontend
+    const bookedHours = reservations.map((res) => {
+      // res.startDate itu UTC. Kita ubah ke string jam WIB.
+      // Contoh: UTC 03:00 -> WIB 10:00
+      const dateInWIB = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
+      const hour = dateInWIB.getUTCHours();
+      // Format jadi "08:00", "10:00"
+      return `${hour.toString().padStart(2, "0")}:00`;
+    });
+
+    return bookedHours;
+  } catch (error) {
+    console.error("Gagal ambil jadwal booked:", error);
     return [];
   }
 };
