@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# Ignore Prisma Generated Client (Biar gak conflict path Windows/Mac)
+app/generated/
+/app/generated

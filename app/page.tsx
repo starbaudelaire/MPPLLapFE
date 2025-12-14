@@ -2,12 +2,15 @@ import Hero from "@/components/hero";
 import Main from "@/components/main";
 import SearchFilter from "@/components/home/search-filter";
 
-// Page component di Next.js 13+ menerima props searchParams secara otomatis
-export default function Home({
+// 1. Ubah definisi props-nya jadi Promise
+export default async function Home({
   searchParams,
 }: {
-  searchParams?: { query?: string; type?: string; location?: string };
+  searchParams: Promise<{ query?: string; type?: string; location?: string }>;
 }) {
+  // 2. WAJIB: Await dulu params-nya biar jadi object biasa
+  const params = await searchParams;
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -29,9 +32,9 @@ export default function Home({
           </p>
         </div>
 
-        {/* List Lapangan dengan Props Search Params */}
+        {/* List Lapangan dengan Props Search Params yang udah di-await */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Main searchParams={searchParams} />
+          <Main searchParams={params} />
         </div>
       </div>
     </main>
