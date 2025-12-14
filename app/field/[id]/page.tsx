@@ -2,9 +2,8 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getFieldById } from "@/lib/data";
 import BookingCard from "@/components/field/booking-card";
-import { MapPinIcon, TrophyIcon } from "@heroicons/react/24/outline";
+import { MapPinIcon } from "@heroicons/react/24/outline";
 
-// Helper sederhana untuk Badge tipe olahraga
 const SportBadge = ({ type }: { type: string }) => {
   const colors: Record<string, string> = {
     FUTSAL: "bg-blue-100 text-blue-800",
@@ -15,13 +14,19 @@ const SportBadge = ({ type }: { type: string }) => {
   };
   return (
     <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide ${colors[type] || "bg-gray-100"}`}>
-      {type.replace("_", " ")}
+      {type.replace("_", " ~~~~")}
     </span>
   );
 };
 
-export default async function FieldDetailPage({ params }: { params: { id: string } }) {
-  const field = await getFieldById(params.id);
+// 👇 PERUBAHAN DISINI
+export default async function FieldDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params; // await params sebelum dipake
+  const field = await getFieldById(id);
 
   if (!field) {
     notFound();
@@ -32,7 +37,7 @@ export default async function FieldDetailPage({ params }: { params: { id: string
       {/* 1. Hero Image Section */}
       <div className="relative w-full h-[40vh] md:h-[50vh] bg-gray-900">
         <Image
-          src={field.image || "/hero.jpg"} // Fallback image jika kosong
+          src={field.image || "/hero.jpg"}
           alt={field.name}
           fill
           className="object-cover opacity-90"

@@ -1,3 +1,5 @@
+// components/navbar/navbar.tsx
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -49,9 +51,9 @@ const Navbar = () => {
           >
             Home
           </Link>
-          {/* 👇 PERBAIKAN 1: Arahin Fields ke halaman Admin lo */}
+          {/* ✅ FIXED: Arahin ke halaman Public, bukan Admin */}
           <Link
-            href="/admin/field"
+            href="/field"
             className="font-light text-sm text-white hover:text-primary"
           >
             Fields
@@ -155,7 +157,7 @@ const Navbar = () => {
         <div className="flex md:hidden justify-between items-center">
           <Link href="/">
             <Image
-              src="/lapang-in.png" // Typo fix: lapangin.png -> lapang-in.png (cek public folder lo kalo masi error gambar)
+              src="/lapang-in.png"
               width={32}
               height={32}
               alt="logo"
@@ -189,9 +191,9 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            {/* 👇 PERBAIKAN 2: Mobile juga arahin ke Admin */}
+            {/* ✅ FIXED: Mobile Link */}
             <Link
-              href="/admin/field"
+              href="/field"
               className="block py-2 px-3 hover:text-primary"
               onClick={() => setOpen(false)}
             >
