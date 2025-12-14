@@ -23,11 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-<<<<<<< HEAD
       "value": "D:\\mppl\\mergebos\\MPPLLapFE\\app\\generated\\prisma",
-=======
-      "value": "D:\\Kuliah\\Semester5\\ManajemenProyekPerangkatLunak\\30seplapang\\MPPLLapFE\\app\\generated\\prisma",
->>>>>>> origin/feature/customer-ui
       "fromEnvVar": null
     },
     "config": {
@@ -41,11 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-<<<<<<< HEAD
     "sourceFilePath": "D:\\mppl\\mergebos\\MPPLLapFE\\prisma\\schema.prisma",
-=======
-    "sourceFilePath": "D:\\Kuliah\\Semester5\\ManajemenProyekPerangkatLunak\\30seplapang\\MPPLLapFE\\prisma\\schema.prisma",
->>>>>>> origin/feature/customer-ui
     "isCustomOutput": true
   },
   "relativePath": "../../../prisma",

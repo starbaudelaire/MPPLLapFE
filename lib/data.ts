@@ -1,113 +1,28 @@
-// lib/data.ts
-import { auth } from "@/auth";
+import { auth } from "@/auth"; // Pastikan path auth ini benar sesuai struktur lo
 import { prisma } from "@/lib/prisma";
-// ... imports lain
+
+// ==========================================
+// SECTION 1: CUSTOMER DATA (Dev 3)
+// ==========================================
 
 // 1. Ambil SATU lapangan (untuk Halaman Detail)
 export const getFieldById = async (id: string) => {
   try {
     const field = await prisma.field.findUnique({
       where: { id },
-      include: { FieldAmenities: { include: { Amenities: true } } },
+      include: { 
+        FieldAmenities: { 
+          include: { Amenities: true } 
+        } 
+      },
     });
     return field;
   } catch (error) {
+    console.error("Error fetching field:", error);
     return null;
   }
 };
 
-<<<<<<< HEAD
-// ... function getAmenities yang udah ada biarin aja ...
-export const getTodayRevenue = async () => {
-  // Opsional: Cek session kalo mau protect banget
-  // const session = await auth();
-  // if (!session || session.user.role !== "admin") return 0; 
-
-  const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0);
-
-  const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999);
-
-  try {
-    const result = await prisma.payment.aggregate({
-      _sum: {
-        amount: true,
-      },
-      where: {
-        status: "PAID", // Inget, pastiin statusnya match sama DB lo
-        createdAt: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-    });
-
-    return result._sum.amount || 0;
-  } catch (error) {
-    console.log("Error fetching revenue:", error);
-    return 0; // Return 0 kalo error biar UI gak crash
-  }
-};
-
-// lib/data.ts
-
-// ... import & function sebelumnya (getAmenities, getTodayRevenue) ...
-
-export const getTotalBooking = async () => {
-  try {
-    // Kita hitung reservasi yang pembayarannya SUKSES (PAID)
-    const count = await prisma.reservation.count({
-      where: {
-        Payment: {
-          status: "PAID", 
-        },
-      },
-    });
-    return count;
-  } catch (error) {
-    console.log("Error fetching total booking:", error);
-    return 0;
-  }
-};
-
-export const getTotalActiveFields = async () => {
-  try {
-    // Hitung total lapangan yang lo punya
-    const count = await prisma.field.count();
-    return count;
-  } catch (error) {
-    console.log("Error fetching total fields:", error);
-    return 0;
-  }
-};
-
-// lib/data.ts
-
-// ... function yang udah ada (getTodayRevenue, dll) biarin aja ...
-
-export const getAllReservations = async () => {
-  try {
-    const reservations = await prisma.reservation.findMany({
-      include: {
-        User: {
-          select: { name: true, email: true }, // Ambil nama & email user aja
-        },
-        Field: {
-          select: { name: true }, // Ambil nama lapangan
-        },
-        Payment: {
-          select: { status: true }, // Ambil status pembayaran
-        },
-      },
-      orderBy: {
-        createdAt: "desc", // Yang paling baru booking muncul paling atas
-      },
-    });
-    return reservations;
-  } catch (error) {
-    console.log("Error fetching reservations:", error);
-=======
 // 2. Ambil BANYAK lapangan (untuk Homepage + Filter)
 export const getAllFields = async (query?: string, type?: string) => {
   try {
@@ -134,7 +49,7 @@ export const getAllFields = async (query?: string, type?: string) => {
   }
 };
 
-// 3. Ambil Booking User (untuk Dashboard)
+// 3. Ambil Booking User (untuk Dashboard User)
 export const getUserReservations = async () => {
   const session = await auth();
   if (!session?.user?.id) return [];
@@ -143,14 +58,78 @@ export const getUserReservations = async () => {
     const reservations = await prisma.reservation.findMany({
       where: { userId: session.user.id },
       include: {
-        Field: true, // Join ke Field biar dapet nama lapangan & gambar
-        Payment: true, // Join ke Payment biar tau status bayar
+        Field: true,
+        Payment: true,
       },
       orderBy: { createdAt: "desc" },
     });
     return reservations;
   } catch (error) {
->>>>>>> origin/feature/customer-ui
+    console.error("Error user reservations:", error);
+    return [];
+  }
+};
+
+
+// ==========================================
+// SECTION 2: ADMIN DASHBOARD DATA (Dev 4)
+// ==========================================
+
+// 4. Hitung Pendapatan Hari Ini (PAID only)
+export const getTodayRevenue = async () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set ke jam 00:00 hari ini
+
+  try {
+    const result = await prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        status: "PAID",
+        createdAt: {
+          gte: today, // Dari jam 00:00 hari ini ke atas
+        },
+      },
+    });
+    return result._sum.amount || 0;
+  } catch (error) {
+    return 0;
+  }
+};
+
+// 5. Total Booking (Semua Status)
+export const getTotalBookings = async () => {
+  try {
+    const count = await prisma.reservation.count();
+    return count;
+  } catch (error) {
+    return 0;
+  }
+};
+
+// 6. Lapangan Aktif
+export const getActiveFields = async () => {
+  try {
+    const count = await prisma.field.count();
+    return count;
+  } catch (error) {
+    return 0;
+  }
+};
+
+// 7. Ambil SEMUA Reservasi (Buat Tabel Admin)
+export const getAllReservations = async () => {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      include: {
+        User: true, // Biar tau siapa yang booking
+        Field: true, // Biar tau lapangan apa
+        Payment: true, // Biar tau status bayar
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return reservations;
+  } catch (error) {
+    console.error("Error admin reservations:", error);
     return [];
   }
 };
