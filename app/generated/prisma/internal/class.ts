@@ -23,11 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-<<<<<<< HEAD
-      "value": "D:\\MPPL\\projectdev2\\MPPLLapFE\\app\\generated\\prisma",
-=======
-      "value": "C:\\Kulyeah\\Semester 5\\MPPL\\lapanginfikz\\MPPLLapFE\\app\\generated\\prisma",
->>>>>>> origin/feature/booking-logic
+      "value": "D:\\mppl\\mergebos\\MPPLLapFE\\app\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -41,11 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-<<<<<<< HEAD
-    "sourceFilePath": "D:\\MPPL\\projectdev2\\MPPLLapFE\\prisma\\schema.prisma",
-=======
-    "sourceFilePath": "C:\\Kulyeah\\Semester 5\\MPPL\\lapanginfikz\\MPPLLapFE\\prisma\\schema.prisma",
->>>>>>> origin/feature/booking-logic
+    "sourceFilePath": "D:\\mppl\\mergebos\\MPPLLapFE\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../../../prisma",
