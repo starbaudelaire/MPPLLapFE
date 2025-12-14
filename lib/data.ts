@@ -1,4 +1,4 @@
-import { auth } from "@/auth"; // Pastikan path auth ini benar sesuai struktur lo
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // ==========================================
@@ -10,10 +10,10 @@ export const getFieldById = async (id: string) => {
   try {
     const field = await prisma.field.findUnique({
       where: { id },
-      include: { 
-        FieldAmenities: { 
-          include: { Amenities: true } 
-        } 
+      include: {
+        FieldAmenities: {
+          include: { Amenities: true },
+        },
       },
     });
     return field;
@@ -30,12 +30,14 @@ export const getAllFields = async (query?: string, type?: string) => {
       where: {
         AND: [
           // Filter nama/lokasi jika ada search query
-          query ? {
-            OR: [
-              { name: { contains: query, mode: "insensitive" } },
-              { address: { contains: query, mode: "insensitive" } },
-            ],
-          } : {},
+          query
+            ? {
+                OR: [
+                  { name: { contains: query, mode: "insensitive" } },
+                  { address: { contains: query, mode: "insensitive" } },
+                ],
+              }
+            : {},
           // Filter tipe olahraga
           type ? { type: type as any } : {},
         ],
@@ -70,7 +72,6 @@ export const getUserReservations = async () => {
   }
 };
 
-
 // ==========================================
 // SECTION 2: ADMIN DASHBOARD DATA (Dev 4)
 // ==========================================
@@ -96,8 +97,8 @@ export const getTodayRevenue = async () => {
   }
 };
 
-// 5. Total Booking (Semua Status)
-export const getTotalBookings = async () => {
+// 5. Total Booking (FIXED NAME: getTotalBookings -> getTotalBooking)
+export const getTotalBooking = async () => {
   try {
     const count = await prisma.reservation.count();
     return count;
@@ -106,8 +107,8 @@ export const getTotalBookings = async () => {
   }
 };
 
-// 6. Lapangan Aktif
-export const getActiveFields = async () => {
+// 6. Lapangan Aktif (FIXED NAME: getActiveFields -> getTotalActiveFields)
+export const getTotalActiveFields = async () => {
   try {
     const count = await prisma.field.count();
     return count;
