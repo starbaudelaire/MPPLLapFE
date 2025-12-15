@@ -5,7 +5,7 @@ import { FieldSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-
+import { getBookedHours as fetchBookedHoursData } from "./data";
 // ==========================================
 // SECTION 1: ADMIN CRUD FIELD
 // ==========================================
@@ -289,49 +289,59 @@ export const updateReservationStatus = async (formData: FormData) => {
 };
 
 // ==========================================
+// SECTION 4: CLIENT DATA FETCHERS
+// ==========================================
+
+// Kita jadiin ini "Wrapper" atau Jembatan doang.
+// Logic utamanya tetep satu sumber di lib/data.ts
+export const getBookedHours = async (fieldId: string, dateStr: string) => {
+  return await fetchBookedHoursData(fieldId, dateStr);
+};
+
+// ==========================================
 // SECTION 4: CLIENT DATA FETCHERS (NEW)
 // (Ini yang kita pindahin dari lib/data.ts)
 // ==========================================
 
-export const getBookedHours = async (fieldId: string, dateStr: string) => {
-  if (!dateStr || !fieldId) return [];
-
-  const [year, month, day] = dateStr.split("-").map(Number);
-
-  // Start: Jam 00:00 WIB (UTC-7)
-  const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
-
-  // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
-  const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
-
-  try {
-    const reservations = await prisma.reservation.findMany({
-      where: {
-        fieldId: fieldId,
-        startDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-        OR: [
-          { Payment: { status: "PAID" } },
-          { Payment: { status: "UNPAID" } },
-        ],
-      },
-      select: {
-        startDate: true,
-      },
-    });
-
-    const bookedHours = reservations.map((res) => {
-      // Convert UTC DB ke WIB Display
-      const dateInWIB = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
-      const hour = dateInWIB.getUTCHours();
-      return `${hour.toString().padStart(2, "0")}:00`;
-    });
-
-    return bookedHours;
-  } catch (error) {
-    console.error("Gagal ambil jadwal booked:", error);
-    return [];
-  }
-};
+// export const getBookedHours = async (fieldId: string, dateStr: string) => {
+//   if (!dateStr || !fieldId) return [];
+//
+//   const [year, month, day] = dateStr.split("-").map(Number);
+//
+//   // Start: Jam 00:00 WIB (UTC-7)
+//   const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
+//
+//   // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
+//   const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
+//
+//   try {
+//     const reservations = await prisma.reservation.findMany({
+//       where: {
+//         fieldId: fieldId,
+//         startDate: {
+//           gte: startOfDay,
+//           lte: endOfDay,
+//         },
+//         OR: [
+//           { Payment: { status: "PAID" } },
+//           { Payment: { status: "UNPAID" } },
+//         ],
+//       },
+//       select: {
+//         startDate: true,
+//       },
+//     });
+//
+//     const bookedHours = reservations.map((res) => {
+//       // Convert UTC DB ke WIB Display
+//       const dateInWIB = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
+//       const hour = dateInWIB.getUTCHours();
+//       return `${hour.toString().padStart(2, "0")}:00`;
+//     });
+//
+//     return bookedHours;
+//   } catch (error) {
+//     console.error("Gagal ambil jadwal booked:", error);
+//     return [];
+//   }
+// };

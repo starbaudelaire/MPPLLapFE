@@ -2,61 +2,55 @@ import { getAllFields } from "@/lib/data";
 import Card from "@/components/card";
 import SearchFilter from "@/components/home/search-filter";
 
-// Kita bikin page ini dinamis karena nerima Search Params
+// Halaman ini sekarang jadi Pusat Pencarian
 export default async function FieldPage({
   searchParams,
 }: {
   searchParams: Promise<{ query?: string; type?: string; location?: string }>;
 }) {
-  // Await search params (Next.js 15/16 requirement)
+  // 1. Tangkep filter dari URL
   const params = await searchParams;
-  
-  // Ambil data lapangan sesuai filter
-  const fields = await getAllFields(params.query || params.location, params.type);
+  const query = params.query || "";
+  const location = params.location || "";
+  const type = params.type || "";
+
+  // 2. Fetch data sesuai filter
+  const fields = await getAllFields(query, location, type);
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-      {/* Header & Filter Section */}
-      <div className="max-w-7xl mx-auto mb-12 space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Cari Lapangan</h1>
-          <p className="text-gray-500 max-w-2xl mx-auto">
-            Temukan venue olahraga terbaik di sekitarmu dan booking sekarang juga.
-          </p>
-        </div>
-        
-        {/* Kita pasang komponen Search biar user bisa ganti filter disini */}
-        <div className="relative z-10">
-          <SearchFilter />
-        </div>
+    <div className="min-h-screen bg-gray-50 pb-20 pt-24">
+      {/* Search Filter kita taruh lagi disini biar user bisa ganti filter tanpa balik home */}
+      <div className="px-4 sm:px-6 lg:px-8 mb-8">
+        <SearchFilter />
       </div>
 
-      {/* Grid Lapangan */}
-      <div className="max-w-7xl mx-auto">
-        {fields.length > 0 ? (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">
+            {fields.length > 0
+              ? "Hasil Pencarian"
+              : "Belum ada lapangan yang pas"}
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Menampilkan {fields.length} lapangan
+          </p>
+        </div>
+
+        {/* 3. Render Hasil */}
+        {fields.length === 0 ? (
+          <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
+            <p className="text-gray-500 text-lg">
+              Waduh, gak nemu lapangan di lokasi itu.
+            </p>
+            <p className="text-gray-400 text-sm">
+              Coba cari daerah lain atau ganti tipe olahraga.
+            </p>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {fields.map((field) => (
               <Card key={field.id} field={field} />
             ))}
-          </div>
-        ) : (
-          /* Empty State (Kalo ga ada lapangan yg cocok) */
-          <div className="text-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <div className="flex flex-col items-center justify-center space-y-4">
-              <span className="text-4xl">🏟️</span>
-              <h3 className="text-lg font-medium text-gray-900">
-                Yah, lapangan tidak ditemukan.
-              </h3>
-              <p className="text-gray-500 max-w-sm mx-auto">
-                Coba ganti kata kunci pencarian atau reset filter kamu, bro.
-              </p>
-              <a 
-                href="/field" 
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#f64e42] hover:bg-[#d93d32] transition"
-              >
-                Reset Filter
-              </a>
-            </div>
           </div>
         )}
       </div>

@@ -2,21 +2,33 @@
 
 import { useState, useEffect } from "react";
 // UPDATE IMPORT INI: Ambil getBookedHours dari action, bukan data
-import { createReservation, getBookedHours } from "@/lib/action";
-
+import { createReservation } from "@/lib/action"; // Buat submit form
+import { getBookedHours } from "@/lib/data"; // Buat narik data jam
 // ... (Sisa kodingan ke bawah SAMA PERSIS kayak yang tadi gua kasih)
 // Biar aman copas full aja nih:
 
 const TIME_SLOTS = [
-  "08:00", "09:00", "10:00", "11:00", "12:00",
-  "13:00", "14:00", "15:00", "16:00", "17:00",
-  "18:00", "19:00", "20:00", "21:00", "22:00"
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
 ];
 
 interface BookingCardProps {
   pricePerHour: number;
   fieldId: string;
-  userId?: string; 
+  userId?: string;
 }
 
 export default function BookingCard({
@@ -26,7 +38,7 @@ export default function BookingCard({
 }: BookingCardProps) {
   const [date, setDate] = useState("");
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
-  
+
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -35,12 +47,12 @@ export default function BookingCard({
     const fetchBookedSlots = async () => {
       if (date) {
         setLoadingSlots(true);
-        setSelectedTimes([]); 
-        
+        setSelectedTimes([]);
+
         // Sekarang ini manggil Server Action, aman buat Client Component
         const booked = await getBookedHours(fieldId, date);
         setBookedSlots(booked);
-        
+
         setLoadingSlots(false);
       }
     };
@@ -69,7 +81,7 @@ export default function BookingCard({
 
     const sortedTimes = [...selectedTimes].sort();
     const startTimeStr = sortedTimes[0];
-    
+
     const lastTimeStr = sortedTimes[sortedTimes.length - 1];
     const lastHour = parseInt(lastTimeStr.split(":")[0]);
     const endHour = lastHour + 1;
@@ -85,7 +97,7 @@ export default function BookingCard({
     const result = await createReservation(formData);
 
     if (result?.error) {
-      alert(result.error); 
+      alert(result.error);
       setIsBooking(false);
     }
   };
@@ -116,9 +128,13 @@ export default function BookingCard({
       <div className="mb-8">
         <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-2">
           <span>Pilih Jam Kosong</span>
-          {loadingSlots && <span className="text-xs text-[#f64e42] animate-pulse">Cek jadwal...</span>}
+          {loadingSlots && (
+            <span className="text-xs text-[#f64e42] animate-pulse">
+              Cek jadwal...
+            </span>
+          )}
         </label>
-        
+
         <div className="grid grid-cols-4 gap-2">
           {TIME_SLOTS.map((time) => {
             const isBooked = bookedSlots.includes(time);
@@ -153,11 +169,11 @@ export default function BookingCard({
 
         <div className="flex gap-4 mt-3 text-[10px] text-gray-500">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div> 
+            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div>
             Full Booked
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-[#f64e42] rounded"></div> 
+            <div className="w-3 h-3 bg-[#f64e42] rounded"></div>
             Pilihanmu
           </div>
         </div>
