@@ -37,6 +37,7 @@ model Field {
 
   FieldAmenities FieldAmenities[]
   Reservation    Reservation[]
+  reviews        Review[]
 }
 
 model Amenities {
@@ -71,6 +72,7 @@ model Reservation {
   Payment Payment?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Review Review?
 }
 
 model Payment {
@@ -97,6 +99,7 @@ model User {
   Reservation   Reservation[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  reviews       Review[]
 }
 
 model Account {
@@ -117,4 +120,24 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+}
+
+
+// Model Review (Verified by Booking)
+model Review {
+  id            String   @id @default(cuid())
+  rating        Int
+  comment       String   @db.Text
+  reply         String?  @db.Text
+  
+  reservationId String   @unique // 1 Booking = 1 Review
+  fieldId       String
+  userId        String     // Tambahin ini biar tau siapa yg review
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  Reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  Field         Field       @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  User          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

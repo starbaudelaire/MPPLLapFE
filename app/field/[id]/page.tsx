@@ -1,9 +1,12 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { getFieldById } from "@/lib/data";
+// import { getFieldById } from "@/lib/data"; // Kita ganti pake prisma langsung di bawah
+import { prisma } from "@/lib/prisma"; // 👈 1. IMPORT PRISMA
 import BookingCard from "@/components/field/booking-card";
 import { MapPinIcon } from "@heroicons/react/24/outline";
-import { auth } from "@/auth"; // 👈 1. IMPORT AUTH
+import { auth } from "@/auth";
+import ReviewList from "@/components/field/review-list"; // 👈 2. IMPORT COMPONENT REVIEW LIST
+export const dynamic = "force-dynamic";
 
 const SportBadge = ({ type }: { type: string }) => {
   const colors: Record<string, string> = {
@@ -27,10 +30,24 @@ export default async function FieldDetailPage({
 }) {
   const { id } = await params;
   
-  // 👇 2. AMBIL SESSION DI SERVER
   const session = await auth(); 
   
-  const field = await getFieldById(id);
+  // 👇 3. GANTI FETCHING DATA BIAR BAWA REVIEW
+  // const field = await getFieldById(id); <--- Kode lama
+  
+  const field = await prisma.field.findUnique({
+    where: { id },
+    include: {
+      FieldAmenities: {
+        include: { Amenities: true },
+      },
+      // Include data review, urutkan dari yang terbaru
+      reviews: {
+        orderBy: { createdAt: 'desc' },
+        include: { User: true } // (Opsional) Biar nama user muncul kalo butuh
+      }
+    },
+  });
 
   if (!field) {
     notFound();
@@ -38,7 +55,7 @@ export default async function FieldDetailPage({
 
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
-      {/* 1. Hero Image Section */}
+      {/* 1. Hero Image Section (JANGAN DIUBAH) */}
       <div className="relative w-full h-[40vh] md:h-[50vh] bg-gray-900">
         <Image
           src={field.image || "/hero.jpg"}
@@ -71,6 +88,7 @@ export default async function FieldDetailPage({
           
           {/* Left Column: Details (2/3 width) */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Deskripsi */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Tentang Lapangan</h2>
               <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed whitespace-pre-line">
@@ -78,6 +96,7 @@ export default async function FieldDetailPage({
               </div>
             </div>
 
+            {/* Fasilitas */}
             <div className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-gray-100">
               <h2 className="text-xl font-bold text-gray-900 mb-6">Fasilitas</h2>
               {field.FieldAmenities.length > 0 ? (
@@ -95,6 +114,12 @@ export default async function FieldDetailPage({
                 <p className="text-gray-400 italic">Belum ada data fasilitas.</p>
               )}
             </div>
+
+            {/* 👇 4. TEMPEL LIST REVIEW DISINI (DI BAWAH FASILITAS) */}
+            <div className="mt-8">
+                <ReviewList reviews={field.reviews} />
+            </div>
+
           </div>
 
           {/* Right Column: Booking Card (1/3 width) */}
@@ -102,7 +127,6 @@ export default async function FieldDetailPage({
             <BookingCard 
                 pricePerHour={field.pricePerHour} 
                 fieldId={field.id}
-                // 👇 3. LEMPAR ID USER KE SINI BRE!
                 userId={session?.user?.id} 
             />
           </div>

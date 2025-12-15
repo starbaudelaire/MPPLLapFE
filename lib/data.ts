@@ -75,6 +75,7 @@ export const getUserReservations = async () => {
       include: {
         Field: true,
         Payment: true,
+        Review: true,
       },
       orderBy: { createdAt: "desc" },
     });
