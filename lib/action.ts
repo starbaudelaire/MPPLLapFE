@@ -81,9 +81,61 @@ export const updateField = async (
   _prevState: unknown,
   formData: FormData
 ) => {
-  // Logic update sederhana
   const amenitiesIds = formData.getAll("amenities") as string[];
-  // (Implementasi update detail bisa ditambahkan di sini sesuai kebutuhan)
+
+  // Implementasi Update Field (menggunakan logic saveField, tapi update)
+  const rawData = {
+    name: formData.get("name"),
+    description: formData.get("description"),
+    address: formData.get("address"),
+    capacity: formData.get("capacity"),
+    pricePerHour: formData.get("pricePerHour"),
+    type: formData.get("type"),
+    image: formData.get("image"),
+    amenities: amenitiesIds,
+  };
+
+  const validatedFields = FieldSchema.safeParse(rawData);
+
+  if (!validatedFields.success) {
+    return {
+      error: validatedFields.error.flatten().fieldErrors,
+      message: "Missing Fields. Failed to Update Field.",
+    };
+  }
+
+  const {
+    name,
+    description,
+    address,
+    capacity,
+    pricePerHour,
+    type,
+    image,
+    amenities,
+  } = validatedFields.data;
+
+  try {
+    await prisma.field.update({
+      where: { id },
+      data: {
+        name,
+        description,
+        address,
+        capacity,
+        pricePerHour,
+        type,
+        image,
+        FieldAmenities: {
+          deleteMany: {}, // Hapus relasi lama
+          create: amenities?.map((amenityId) => ({ amenitiesId: amenityId })), // Buat relasi baru
+        },
+      },
+    });
+  } catch (error) {
+    return { message: "Database Error: Failed to Update Field." };
+  }
+
   revalidatePath("/admin/field");
   redirect("/admin/field");
 };
@@ -160,6 +212,7 @@ export const createReservation = async (formData: FormData) => {
           amount: totalAmount,
           status: "UNPAID",
           reservationId: reservation.id,
+          method: "QARIS_DUMMY", // Tambah method biar gak default null
         },
       });
       return reservation;
@@ -169,12 +222,12 @@ export const createReservation = async (formData: FormData) => {
     return { error: "Booking Failed" };
   }
 
-  // Redirect ke halaman pembayaran
-  redirect(`/booking/payment/${reservationId}`);
+  // FIX PENTING: Hapus '/payment' dari URL
+  redirect(`/booking/${reservationId}`);
 };
 
 // ==========================================
-// 3. PAYMENT & USER ACTIONS (YANG HILANG TADI)
+// 3. PAYMENT & USER ACTIONS
 // ==========================================
 
 export const confirmPayment = async (reservationId: string) => {
@@ -201,7 +254,7 @@ export const cancelReservation = async (reservationId: string) => {
 };
 
 // ==========================================
-// 4. ADMIN REVENUE (YANG HILANG TADI)
+// 4. ADMIN REVENUE
 // ==========================================
 
 export const getRevenueData = async () => {
@@ -289,13 +342,10 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
 // 7. ADMIN DASHBOARD ACTIONS (TAMBAHAN)
 // ==========================================
 
-// lib/action.ts (Bagian paling bawah)
-
 export const updateReservationStatus = async (formData: FormData) => {
   const reservationId = formData.get("reservationId") as string;
   const status = formData.get("status") as any;
 
-  // HAPUS return object, ganti jadi return kosong atau throw
   if (!reservationId || !status) {
     console.error("Update Status Gagal: Data tidak lengkap");
     return;
@@ -308,7 +358,6 @@ export const updateReservationStatus = async (formData: FormData) => {
     });
   } catch (error) {
     console.error("Update Status Error", error);
-    // HAPUS return { message: ... }
     return;
   }
 
