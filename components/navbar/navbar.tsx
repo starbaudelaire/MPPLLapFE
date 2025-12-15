@@ -29,6 +29,9 @@ const Navbar = () => {
     };
   }, [profileMenuRef]);
 
+  // Shortcut check admin
+  const isAdmin = session?.user?.role === "admin";
+
   return (
     <div className="fixed top-0 w-full z-20 bg-black/40 backdrop-blur-md">
       <div className="max-w-screen-xl mx-auto p-4">
@@ -43,58 +46,81 @@ const Navbar = () => {
               priority
             />
           </Link>
-          <Link
-            href="/"
-            className="font-light text-sm text-white hover:text-primary"
-          >
-            Home
-          </Link>
-          {/* ✅ FIXED: Arahin ke halaman Public, bukan Admin */}
-          <Link
-            href="/field"
-            className="font-light text-sm text-white hover:text-primary"
-          >
-            Fields
-          </Link>
+
+          {/* 1. HOME / DASHBOARD */}
+          {isAdmin ? (
+            <Link
+              href="/admin/dashboard"
+              className="font-light text-sm text-white hover:text-primary"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/"
+              className="font-light text-sm text-white hover:text-primary"
+            >
+              Home
+            </Link>
+          )}
+
+          {/* 2. FIELDS (Cuma buat user biasa) */}
+          {!isAdmin && (
+            <Link
+              href="/field"
+              className="font-light text-sm text-white hover:text-primary"
+            >
+              Fields
+            </Link>
+          )}
 
           {session && (
             <>
-              <Link
-                href="/myreservation"
-                className="font-light text-sm text-white hover:text-primary"
-              >
-                Schedule
-              </Link>
-              {session.user.role === "admin" && (
-                <>
-                  <Link
-                    href="/admin/field"
-                    className="font-light text-sm text-white hover:text-primary"
-                  >
-                    Manage
-                  </Link>
-                  <Link
-                    href="/admin/dashboard"
-                    className="font-light text-sm text-white hover:text-primary"
-                  >
-                    Dashboard
-                  </Link>
-                </>
+              {/* 3. SCHEDULE / REVENUE */}
+              {isAdmin ? (
+                <Link
+                  href="/admin/revenue"
+                  className="font-light text-sm text-white hover:text-primary"
+                >
+                  Revenue
+                </Link>
+              ) : (
+                <Link
+                  href="/myreservation"
+                  className="font-light text-sm text-white hover:text-primary"
+                >
+                  Schedule
+                </Link>
+              )}
+
+              {/* 4. MANAGE (Khusus Admin) */}
+              {isAdmin && (
+                <Link
+                  href="/admin/field"
+                  className="font-light text-sm text-white hover:text-primary"
+                >
+                  Manage
+                </Link>
               )}
             </>
           )}
+
           <Link
             href="/about"
             className="font-light text-sm text-white hover:text-primary"
           >
             About
           </Link>
-          <Link
-            href="/contact"
-            className="font-light text-sm text-white hover:text-primary"
-          >
-            Contact
-          </Link>
+
+          {/* 5. CONTACT (Cuma buat user biasa) */}
+          {!isAdmin && (
+            <Link
+              href="/contact"
+              className="font-light text-sm text-white hover:text-primary"
+            >
+              Contact
+            </Link>
+          )}
 
           {/* Auth Desktop */}
           <div className="relative" ref={profileMenuRef}>
@@ -151,7 +177,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* --- Versi Mobile (Logo + Tombol Menu) --- */}
+        {/* --- Versi Mobile --- */}
         <div className="flex md:hidden justify-between items-center">
           <Link href="/">
             <Image
@@ -180,37 +206,60 @@ const Navbar = () => {
       >
         <ul className="flex flex-col font-normal p-4 mt-0 text-gray-800">
           <li>
-            <Link
-              href="/"
-              className="block py-2 px-3 hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              Home
-            </Link>
+            {isAdmin ? (
+              <Link
+                href="/admin/dashboard"
+                className="block py-2 px-3 hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/"
+                className="block py-2 px-3 hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                Home
+              </Link>
+            )}
           </li>
-          <li>
-            {/* ✅ FIXED: Mobile Link */}
-            <Link
-              href="/field"
-              className="block py-2 px-3 hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              Fields
-            </Link>
-          </li>
+
+          {/* Logic Field Mobile */}
+          {!isAdmin && (
+            <li>
+              <Link
+                href="/field"
+                className="block py-2 px-3 hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                Fields
+              </Link>
+            </li>
+          )}
 
           {session && (
             <>
               <li>
-                <Link
-                  href="/myreservation"
-                  className="block py-2 px-3 hover:text-primary"
-                  onClick={() => setOpen(false)}
-                >
-                  Schedule
-                </Link>
+                {isAdmin ? (
+                  <Link
+                    href="/admin/revenue"
+                    className="block py-2 px-3 hover:text-primary"
+                    onClick={() => setOpen(false)}
+                  >
+                    Revenue
+                  </Link>
+                ) : (
+                  <Link
+                    href="/myreservation"
+                    className="block py-2 px-3 hover:text-primary"
+                    onClick={() => setOpen(false)}
+                  >
+                    Schedule
+                  </Link>
+                )}
               </li>
-              {session.user.role === "admin" && (
+              {isAdmin && (
                 <>
                   <li className="border-t border-gray-200 my-2"></li>
                   <li>
@@ -222,19 +271,11 @@ const Navbar = () => {
                       Manage Fields
                     </Link>
                   </li>
-                  <li>
-                    <Link
-                      href="/admin/dashboard"
-                      className="block py-2 px-3 hover:text-primary"
-                      onClick={() => setOpen(false)}
-                    >
-                      Dashboard
-                    </Link>
-                  </li>
                 </>
               )}
             </>
           )}
+
           <li>
             <Link
               href="/about"
@@ -244,15 +285,19 @@ const Navbar = () => {
               About
             </Link>
           </li>
-          <li>
-            <Link
-              href="/contact"
-              className="block py-2 px-3 hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              Contact
-            </Link>
-          </li>
+
+          {/* Logic Contact Mobile */}
+          {!isAdmin && (
+            <li>
+              <Link
+                href="/contact"
+                className="block py-2 px-3 hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                Contact
+              </Link>
+            </li>
+          )}
 
           <li className="border-t border-gray-200 my-2"></li>
           {session ? (

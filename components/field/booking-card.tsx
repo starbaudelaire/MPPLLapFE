@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { createReservation, getBookedHours } from "@/lib/action";
-import { useRouter } from "next/navigation";
 
 const TIME_SLOTS = [
   "08:00",
@@ -44,11 +43,9 @@ export default function BookingCard({
       if (date) {
         setLoadingSlots(true);
         setSelectedTimes([]);
-
-        // Panggil Server Action (Jembatan)
+        // Panggil Server Action buat cek slot
         const booked = await getBookedHours(fieldId, date);
         setBookedSlots(booked);
-
         setLoadingSlots(false);
       }
     };
@@ -56,8 +53,17 @@ export default function BookingCard({
     fetchBookedSlots();
   }, [date, fieldId]);
 
+  // Cek kalau jam udah lewat (biar gak bisa dibooking)
+  const isTimePassed = (time: string) => {
+    if (!date) return false;
+    const now = new Date();
+    const slotDate = new Date(`${date}T${time}:00`);
+    return slotDate < now;
+  };
+
   const handleTimeClick = (time: string) => {
-    if (bookedSlots.includes(time)) return;
+    // Gabungan logic: Booked atau Lewat -> Gak bisa diklik
+    if (bookedSlots.includes(time) || isTimePassed(time)) return;
 
     if (selectedTimes.includes(time)) {
       setSelectedTimes(selectedTimes.filter((t) => t !== time));
@@ -66,7 +72,9 @@ export default function BookingCard({
     }
   };
 
-  const totalPrice = selectedTimes.length * pricePerHour;
+  // Itung-itungan Duit & Jam
+  const totalHours = selectedTimes.length;
+  const totalPrice = totalHours * pricePerHour;
 
   const handleBooking = async () => {
     if (!date || selectedTimes.length === 0)
@@ -75,20 +83,17 @@ export default function BookingCard({
 
     setIsBooking(true);
 
+    // Ambil jam paling awal
     const sortedTimes = [...selectedTimes].sort();
     const startTimeStr = sortedTimes[0];
-
-    // Logic nentuin end time (misal pilih 10:00, berarti main sampe 11:00)
-    const lastTimeStr = sortedTimes[sortedTimes.length - 1];
-    const lastHour = parseInt(lastTimeStr.split(":")[0]);
-    const endHour = lastHour + 1;
-    const formattedEndTime = `${endHour < 10 ? "0" + endHour : endHour}:00`;
 
     const formData = new FormData();
     formData.append("fieldId", fieldId);
     formData.append("userId", userId);
     formData.append("startDate", `${date}T${startTimeStr}`);
-    formData.append("endDate", `${date}T${formattedEndTime}`);
+    
+    // [PENTING] Kirim durasi jam ke server!
+    formData.append("hours", totalHours.toString());
     formData.append("price", totalPrice.toString());
 
     const result = await createReservation(formData);
@@ -137,17 +142,19 @@ export default function BookingCard({
         <div className="grid grid-cols-4 gap-2">
           {TIME_SLOTS.map((time) => {
             const isBooked = bookedSlots.includes(time);
+            const isPassed = isTimePassed(time);
             const isSelected = selectedTimes.includes(time);
+            const isDisabled = isBooked || isPassed;
 
             return (
               <button
                 key={time}
                 onClick={() => handleTimeClick(time)}
-                disabled={isBooked}
+                disabled={isDisabled}
                 className={`
                   text-sm py-2 rounded-md border transition-all relative overflow-hidden font-medium
                   ${
-                    isBooked
+                    isDisabled
                       ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
                       : isSelected
                       ? "bg-[#f64e42] text-white border-[#f64e42] shadow-md transform scale-105"
@@ -156,7 +163,7 @@ export default function BookingCard({
                 `}
               >
                 {time}
-                {isBooked && (
+                {isDisabled && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-full h-[1px] bg-gray-300 rotate-45 transform"></div>
                   </div>
@@ -169,8 +176,12 @@ export default function BookingCard({
         {/* Legend */}
         <div className="flex gap-4 mt-3 text-[10px] text-gray-500">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div>
-            Full Booked
+            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded relative overflow-hidden">
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-full h-[1px] bg-gray-300 rotate-45 transform"></div>
+                </div>
+            </div>
+            Tidak Tersedia
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-[#f64e42] rounded"></div>
@@ -201,10 +212,10 @@ export default function BookingCard({
           {isBooking ? (
             <>
               <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-              Memproses...
+              Proses Payment...
             </>
           ) : (
-            "Booking Sekarang"
+            "Lanjut Pembayaran"
           )}
         </button>
         <p className="text-xs text-center text-gray-400 mt-3">
