@@ -436,13 +436,6 @@ export const getFieldRevenueDetail = async (fieldId: string) => {
   return { field, reservations };
 };
 
-//
-// ... code yang udah ada ...
-
-// ==========================================
-// SECTION 6: APP REVENUE HISTORY (NEW)
-// ==========================================
-
 export const getAppRevenueHistory = async () => {
   try {
     const reservations = await prisma.reservation.findMany({
@@ -481,4 +474,63 @@ export const getAppRevenueHistory = async () => {
     console.error("Gagal ambil history revenue app:", error);
     return [];
   }
+};
+
+// ==========================================
+// SECTION 6: REVIEW SYSTEM (NEW ADDITION)
+// ==========================================
+
+export const createReview = async (formData: FormData) => {
+  // 1. Debugging: Cek apakah function kepanggil
+  console.log("🚀 createReview dipanggil!");
+
+  const session = await auth();
+  if (!session?.user?.id) {
+    console.log("❌ Error: User gak ada session");
+    return { error: "Sesi habis, login lagi gih." };
+  }
+
+  const reservationId = formData.get("reservationId") as string;
+  const fieldId = formData.get("fieldId") as string;
+  const rating = parseInt(formData.get("rating") as string);
+  const comment = formData.get("comment") as string;
+
+  // 2. Debugging: Cek data yang masuk
+  console.log("📦 Data Review:", { reservationId, fieldId, rating, comment });
+
+  if (!rating || !comment) return { error: "Bintang & Komen wajib diisi!" };
+  if (!reservationId || !fieldId) return { error: "Data ID tidak valid (Corrupt)." };
+
+  try {
+    // 3. Validasi Booking
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+    });
+
+    if (!reservation) return { error: "Booking tidak ditemukan." };
+    if (reservation.userId !== session.user.id) return { error: "Bukan bookingan lo!" };
+
+    // 4. Simpan ke Database
+    await prisma.review.create({
+      data: {
+        userId: session.user.id,
+        fieldId: fieldId,
+        reservationId: reservationId,
+        rating: rating,
+        comment: comment,
+      },
+    });
+
+    console.log("✅ Review sukses masuk DB!");
+
+  } catch (error) {
+    console.error("🔥 Error Prisma:", error);
+    return { error: "Gagal simpan ke database." };
+  }
+
+  // 5. Refresh Halaman (Tanpa Redirect)
+  revalidatePath("/myreservation");
+  revalidatePath(`/field/${fieldId}`);
+  
+  return { success: true };
 };
