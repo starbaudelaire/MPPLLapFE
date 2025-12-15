@@ -207,7 +207,7 @@ export const createReservation = async (formData: FormData) => {
   const session = await auth();
   if (!session?.user?.id) return { error: "Login dulu bos!" };
   const userId = session.user.id;
-  
+
   const fieldId = formData.get("fieldId") as string;
   const startDateStr = formData.get("startDate") as string;
   const endDateStr = formData.get("endDate") as string;
@@ -216,7 +216,12 @@ export const createReservation = async (formData: FormData) => {
   const startDate = parseWIB(startDateStr);
   const endDate = parseWIB(endDateStr);
 
-  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+  if (
+    !startDate ||
+    !endDate ||
+    isNaN(startDate.getTime()) ||
+    isNaN(endDate.getTime())
+  ) {
     return { error: "Format tanggal ngaco nih! Coba refresh." };
   }
 
@@ -259,7 +264,7 @@ export const createReservation = async (formData: FormData) => {
   }
 
   revalidatePath("/field");
-  redirect(`/booking/success?id=${newReservationId}`);
+  redirect(`/myreservation`);
 };
 
 // ==========================================
@@ -292,10 +297,10 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
   if (!dateStr || !fieldId) return [];
 
   const [year, month, day] = dateStr.split("-").map(Number);
-  
+
   // Start: Jam 00:00 WIB (UTC-7)
   const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
-  
+
   // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
   const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
 

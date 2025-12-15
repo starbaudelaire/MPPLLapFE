@@ -17,7 +17,7 @@ export default async function Home({
       <Hero />
 
       {/* Search Filter Section (Floating overlapping Hero) */}
-      <div className="px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8 ">
         <SearchFilter />
       </div>
 

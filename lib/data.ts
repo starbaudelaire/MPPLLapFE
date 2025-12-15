@@ -24,22 +24,35 @@ export const getFieldById = async (id: string) => {
 };
 
 // 2. Ambil BANYAK lapangan (untuk Homepage + Filter)
-export const getAllFields = async (query?: string, type?: string) => {
+export const getAllFields = async (
+  query?: string,
+  location?: string,
+  type?: string
+) => {
   try {
     const fields = await prisma.field.findMany({
       where: {
         AND: [
-          // Filter nama/lokasi jika ada search query
+          // 1. Filter Nama Lapangan (Query Utama)
           query
             ? {
-                OR: [
-                  { name: { contains: query, mode: "insensitive" } },
-                  { address: { contains: query, mode: "insensitive" } },
-                ],
+                name: { contains: query, mode: "insensitive" },
               }
             : {},
-          // Filter tipe olahraga
-          type ? { type: type as any } : {},
+
+          // 2. Filter Lokasi (Cari teks di dalam alamat)
+          location
+            ? {
+                address: { contains: location, mode: "insensitive" },
+              }
+            : {},
+
+          // 3. Filter Tipe Olahraga (Harus persis, misal "FUTSAL")
+          type && type !== "all"
+            ? {
+                type: type as any,
+              }
+            : {},
         ],
       },
       orderBy: { createdAt: "desc" },
@@ -81,10 +94,10 @@ export const getTodayRevenue = async () => {
   // Trik: Kita geser waktu server (UTC) ke WIB dulu buat nentuin "Hari ini tanggal berapa"
   const now = new Date();
   const offsetWIB = 7 * 60 * 60 * 1000; // 7 Jam dalam milisecond
-  
+
   // Ini waktu "sekarang" seolah-olah kita di Jakarta
   const nowWIB = new Date(now.getTime() + offsetWIB);
-  
+
   // Set jam 00:00:00 WIB
   nowWIB.setUTCHours(0, 0, 0, 0);
 
@@ -159,10 +172,10 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
 
   // 1. Tentukan Range Jam 00:00 - 23:59 WIB pada tanggal tersebut
   const [year, month, day] = dateStr.split("-").map(Number);
-  
+
   // Start: Jam 00:00 WIB (UTC-7)
   const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
-  
+
   // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
   const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
 

@@ -1,35 +1,38 @@
-import Card from "@/components/card";
 import { getAllFields } from "@/lib/data";
+import Card from "./card";
 
-// Component ini async karena Server Component
-const Main = async ({
+export default async function Main({
   searchParams,
 }: {
-  searchParams?: { query?: string; type?: string; location?: string };
-}) => {
-  // Gabungkan query search nama & lokasi
-  const query = searchParams?.query || searchParams?.location || "";
-  const type = searchParams?.type || "";
-
-  // Fetch data
-  const fields = await getAllFields(query, type);
+  searchParams: { query?: string; type?: string; location?: string };
+}) {
+  // Panggil function sakti dengan 3 filter
+  const fields = await getAllFields(
+    searchParams.query,
+    searchParams.location,
+    searchParams.type
+  );
 
   if (fields.length === 0) {
     return (
-      <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
-        <h3 className="text-lg font-medium text-gray-900">Tidak ada lapangan ditemukan.</h3>
-        <p className="text-gray-500">Coba ganti kata kunci atau filter pencarianmu.</p>
+      <div className="text-center py-20">
+        <p className="text-gray-500 text-lg">
+          Waduh, lapangan yang dicari gak ketemu nih.
+        </p>
+        <p className="text-gray-400 text-sm">
+          Coba ganti kata kunci atau reset filter.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {fields.map((field) => (
-        <Card key={field.id} field={field} />
+        <div key={field.id} className="h-full">
+          <Card field={field} />
+        </div>
       ))}
     </div>
   );
-};
-
-export default Main;
+}

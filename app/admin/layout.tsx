@@ -1,5 +1,3 @@
-// app/admin/layout.tsx
-
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -9,20 +7,19 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 1. Kita tarik data session user yang lagi login
+  // 1. Cek Session
   const session = await auth();
 
   // 2. LOGIC SATPAM / BOUNCER 🛡️
-  // Kalo user belom login (session null) ATAU role-nya bukan 'admin'
   if (!session || session.user.role !== "admin") {
-    // "Sorry bro, this area is restricted." -> Tendang ke Home
-    redirect("/"); 
+    redirect("/"); // Tendang user nakal
   }
 
-  // 3. Kalo aman (dia admin), silakan lanjut render halaman admin-nya
+  // 3. Render Halaman Admin dengan FIX PADDING
   return (
-    <>
-      {children}
-    </>
+    // TAMBAHAN PENTING: pt-24 min-h-screen bg-gray-50
+    <div className="pt-24 min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
+    </div>
   );
 }
