@@ -1,11 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// UPDATE IMPORT INI: Ambil getBookedHours dari action, bukan data
-import { createReservation } from "@/lib/action"; // Buat submit form
-import { getBookedHours } from "@/lib/data"; // Buat narik data jam
-// ... (Sisa kodingan ke bawah SAMA PERSIS kayak yang tadi gua kasih)
-// Biar aman copas full aja nih:
+import { createReservation, getBookedHours } from "@/lib/action";
+import { useRouter } from "next/navigation";
 
 const TIME_SLOTS = [
   "08:00",
@@ -38,7 +35,6 @@ export default function BookingCard({
 }: BookingCardProps) {
   const [date, setDate] = useState("");
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
-
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -49,7 +45,7 @@ export default function BookingCard({
         setLoadingSlots(true);
         setSelectedTimes([]);
 
-        // Sekarang ini manggil Server Action, aman buat Client Component
+        // Panggil Server Action (Jembatan)
         const booked = await getBookedHours(fieldId, date);
         setBookedSlots(booked);
 
@@ -82,6 +78,7 @@ export default function BookingCard({
     const sortedTimes = [...selectedTimes].sort();
     const startTimeStr = sortedTimes[0];
 
+    // Logic nentuin end time (misal pilih 10:00, berarti main sampe 11:00)
     const lastTimeStr = sortedTimes[sortedTimes.length - 1];
     const lastHour = parseInt(lastTimeStr.split(":")[0]);
     const endHour = lastHour + 1;
@@ -107,24 +104,26 @@ export default function BookingCard({
       <div className="flex justify-between items-end mb-6">
         <div>
           <p className="text-sm text-gray-500 font-medium">Harga per jam</p>
-          <h3 className="text-2xl font-bold text-lapang-dark">
+          <h3 className="text-2xl font-bold text-gray-900">
             Rp {pricePerHour.toLocaleString("id-ID")}
           </h3>
         </div>
       </div>
 
+      {/* Input Tanggal */}
       <div className="mb-6">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Pilih Tanggal Main
         </label>
         <input
           type="date"
-          className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#f64e42] focus:border-transparent outline-none"
+          className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#f64e42] focus:border-transparent outline-none transition-all"
           onChange={(e) => setDate(e.target.value)}
           min={new Date().toISOString().split("T")[0]}
         />
       </div>
 
+      {/* Grid Jam */}
       <div className="mb-8">
         <label className="flex justify-between items-center text-sm font-medium text-gray-700 mb-2">
           <span>Pilih Jam Kosong</span>
@@ -146,7 +145,7 @@ export default function BookingCard({
                 onClick={() => handleTimeClick(time)}
                 disabled={isBooked}
                 className={`
-                  text-sm py-2 rounded-md border transition-all relative overflow-hidden
+                  text-sm py-2 rounded-md border transition-all relative overflow-hidden font-medium
                   ${
                     isBooked
                       ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
@@ -167,6 +166,7 @@ export default function BookingCard({
           })}
         </div>
 
+        {/* Legend */}
         <div className="flex gap-4 mt-3 text-[10px] text-gray-500">
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded"></div>
@@ -185,6 +185,7 @@ export default function BookingCard({
         )}
       </div>
 
+      {/* Total & Button */}
       <div className="border-t pt-4">
         <div className="flex justify-between items-center mb-4">
           <span className="font-semibold text-gray-900">Total</span>
@@ -195,12 +196,16 @@ export default function BookingCard({
         <button
           onClick={handleBooking}
           disabled={!date || selectedTimes.length === 0 || isBooking}
-          className="w-full bg-[#f64e42] text-white font-bold py-3 rounded-lg hover:bg-[#d93d32] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex justify-center items-center"
+          className="w-full bg-[#f64e42] text-white font-bold py-3 rounded-lg hover:bg-[#d93d32] disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95 flex justify-center items-center"
         >
           {isBooking ? (
-            <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-          ) : null}
-          {isBooking ? "Memproses..." : "Booking Sekarang"}
+            <>
+              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
+              Memproses...
+            </>
+          ) : (
+            "Booking Sekarang"
+          )}
         </button>
         <p className="text-xs text-center text-gray-400 mt-3">
           Belum dikenakan biaya admin.
