@@ -13,16 +13,29 @@ export default async function RevenuePage() {
         <p className="text-gray-500">Pantau pendapatan lapangan dan aplikasi disini.</p>
       </div>
 
-      {/* CARD TOTAL REVENUE APLIKASI */}
-      <div className="bg-gradient-to-r from-[#f64e42] to-[#d93d32] rounded-2xl p-8 text-white shadow-lg mb-10 flex items-center justify-between">
-        <div>
+      {/* CARD TOTAL REVENUE APLIKASI (UDAH GUA KASIH LINK KE APP HISTORY) */}
+      <div className="bg-gradient-to-r from-[#f64e42] to-[#d93d32] rounded-2xl p-8 text-white shadow-lg mb-10 flex items-center justify-between relative overflow-hidden group">
+        
+        {/* Hiasan background dikit biar ga sepi */}
+        <div className="absolute -right-6 -top-6 bg-white/10 w-32 h-32 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div className="z-10">
           <h2 className="text-lg font-medium opacity-90 mb-1">Total Pendapatan LapangIn</h2>
           <p className="text-sm opacity-75 mb-4">(Akumulasi Application Fee 10% + Kode Unik)</p>
-          <h3 className="text-4xl font-bold">
+          <h3 className="text-4xl font-bold mb-4">
             Rp {totalAppRevenue.toLocaleString("id-ID")}
           </h3>
+          
+          {/* ---> INI TOMBOL BARUNYA BRO <--- */}
+          <Link 
+            href="/admin/revenue/app-history"
+            className="inline-flex items-center text-xs font-semibold bg-white/20 hover:bg-white/30 py-2 px-4 rounded-lg transition backdrop-blur-sm"
+          >
+            Lihat Rincian History →
+          </Link>
         </div>
-        <div className="bg-white/20 p-4 rounded-full">
+
+        <div className="bg-white/20 p-4 rounded-full z-10">
             <BanknotesIcon className="w-12 h-12 text-white" />
         </div>
       </div>

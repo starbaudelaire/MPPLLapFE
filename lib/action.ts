@@ -435,3 +435,50 @@ export const getFieldRevenueDetail = async (fieldId: string) => {
 
   return { field, reservations };
 };
+
+//
+// ... code yang udah ada ...
+
+// ==========================================
+// SECTION 6: APP REVENUE HISTORY (NEW)
+// ==========================================
+
+export const getAppRevenueHistory = async () => {
+  try {
+    const reservations = await prisma.reservation.findMany({
+      where: {
+        Payment: { status: "PAID" }, // Kita cuma mau yang udah cair alias PAID
+      },
+      include: {
+        User: true,
+        Field: true,
+        Payment: true,
+      },
+      orderBy: { createdAt: "desc" }, // Dari yang paling fresh
+    });
+
+    // Kita mapping datanya biar enak dikonsumsi di frontend
+    const history = reservations.map((res) => {
+      const totalPaid = res.Payment?.amount || 0;
+      const fieldPrice = res.price;
+      
+      // Ini logic "cuan" aplikasi lo: Total Transfer - Jatah Lapangan
+      const appRevenue = totalPaid - fieldPrice; 
+
+      return {
+        id: res.id,
+        bookingCode: res.id.slice(-5).toUpperCase(), // Biar ada kode booking pendek
+        user: res.User.name || "User Tanpa Nama",
+        userEmail: res.User.email,
+        field: res.Field.name,
+        date: res.startDate,
+        appRevenue: appRevenue, // <--- Ini duit jatah elo
+      };
+    });
+
+    return history;
+  } catch (error) {
+    console.error("Gagal ambil history revenue app:", error);
+    return [];
+  }
+};
