@@ -1,120 +1,186 @@
-// prisma/schema.prisma
-
 generator client {
-  provider = "prisma-client"
-  // Path output-nya kita arahin ke 'app' biar rapi
-  output   = "../app/generated/prisma" 
+  provider = "prisma-client-js"
+  // HAPUS output custom biar generate ke node_modules (Standard)
 }
 
 datasource db {
   provider = "postgresql"
-  // Ini otomatis ngambil dari .env elo, aman
-  url      = env("POSTGRES_PRISMA_URL") 
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  url      = env("DATABASE_URL")
 }
 
-// Enum baru dari repo 'master'
+// Enums
+enum Role {
+  admin
+  user
+}
+
 enum SportType {
   FUTSAL
   BASKETBALL
   BADMINTON
   MINI_SOCCER
   TENNIS
+  VOLLEYBALL
 }
 
-// Model 'Room' diganti jadi 'Field'
+enum PaymentStatus {
+  UNPAID
+  PAID
+  CANCELLED
+}
+
+// === AUTH MODELS ===
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(user)
+  
+  // Phone dihapus dari User karena emang jarang dipake di Auth Google
+  
+  accounts      Account[]
+  sessions      Session[]
+  
+  reservations  Reservation[]
+  reviews       Review[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@unique([identifier, token])
+}
+
+// === APP MODELS ===
+
 model Field {
-  id          String   @id @default(cuid())
-  name        String
-  description String   @db.Text
-  image       String
-  pricePerHour Int     // <-- Ganti dari price
-  capacity    Int      @default(1)
-  type        SportType // <-- Field baru
-  address     String?     // <-- Field baru
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String    @id @default(cuid())
+  name         String
+  description  String    @db.Text
+  address      String
+  capacity     Int       @default(1)
+  pricePerHour Float
+  type         SportType
+  image        String?
+  
   FieldAmenities FieldAmenities[]
-  Reservation    Reservation[]
+  Reservations   Reservation[]
+  Reviews        Review[]
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
+// PAKE NAMA 'Amenities' (PLURAL) BIAR COCOK SAMA UI
 model Amenities {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id             String         @id @default(cuid())
+  name           String         @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
   FieldAmenities FieldAmenities[]
 }
 
-// Model 'RoomAmenties' jadi 'FieldAmenities'
 model FieldAmenities {
-  id          String @id @default(cuid())
   fieldId     String
   amenitiesId String
 
-  Field     Field     @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  Amenities Amenities @relation(fields: [amenitiesId], references: [id], onDelete: Cascade)
+  field     Field     @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  amenity   Amenities @relation(fields: [amenitiesId], references: [id], onDelete: Cascade)
+
+  @@id([fieldId, amenitiesId])
 }
 
 model Reservation {
   id        String   @id @default(cuid())
+  userId    String
+  fieldId   String
   startDate DateTime
   endDate   DateTime
-  price     Int
-  userId    String
-  fieldId   String // <-- Ganti dari roomId
-
-  User    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Field   Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade) // <-- Ganti dari Room
-  Payment Payment?
+  price     Float
+  
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  Payment   Payment?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Payment {
-  id            String      @id @default(cuid())
-  method        String?
-  amount        Int
-  status        String      @default("unpaid")
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  reservationId String      @unique
-  Reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-}
-
-// Model User & Account (tetep sama, auth aman)
-model User {
   id            String        @id @default(cuid())
-  name          String?
-  email         String        @unique
-  emailVerified DateTime?
-  image         String?
-  role          String        @default("user")
-  phone         String?
-  accounts      Account[]
-  Reservation   Reservation[]
+  amount        Float
+  status        PaymentStatus @default(UNPAID)
+  method        String        @default("QRIS")
+  reservationId String        @unique
+  
+  Reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
 
-model Account {
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int
+  comment   String   @db.Text
+  userId    String
+  fieldId   String
+  createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+}
 
-  @@id([provider, providerAccountId])
+// TAMBAHAN: MODEL MESSAGE BUAT CONTACT US
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  phone     String?  // <-- GUA TAMBAHIN PHONE DISINI AJA KALAU MAU
+  createdAt DateTime @default(now())
 }

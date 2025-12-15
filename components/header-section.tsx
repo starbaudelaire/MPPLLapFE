@@ -5,7 +5,7 @@ const HeaderSection = ({
   subTitle,
 }: {
   title: string;
-  subTitle: string;
+  subTitle?: string;
 }) => {
   return (
     <header className="relative h-60 text-white overflow-hidden">

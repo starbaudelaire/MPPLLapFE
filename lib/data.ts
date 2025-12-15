@@ -214,3 +214,15 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
     return [];
   }
 };
+
+// --- TAMBAHAN BUAT CREATE FIELD ---
+
+export const getAmenities = async () => {
+  try {
+    const amenities = await prisma.amenities.findMany();
+    return amenities;
+  } catch (error) {
+    console.error("Database Error:", error);
+    return [];
+  }
+};
