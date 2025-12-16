@@ -202,14 +202,14 @@ export const createReservation = async (formData: FormData) => {
 
   const fieldId = formData.get("fieldId") as string;
   const startDateStr = formData.get("startDate") as string;
-  
+
   // [PENTING] Baca durasi jam yang dikirim dari BookingCard
-  const hours = Number(formData.get("hours")) || 1; 
-  
+  const hours = Number(formData.get("hours")) || 1;
+
   const fieldPrice = Number(formData.get("price"));
 
   const startDate = parseWIB(startDateStr);
-  
+
   if (!startDate || isNaN(startDate.getTime())) {
     return { error: "Format tanggal ngaco nih! Coba refresh." };
   }
@@ -224,7 +224,7 @@ export const createReservation = async (formData: FormData) => {
   }
 
   // --- LOGIC HARGA & KODE UNIK ---
-  const appFee = Math.floor(fieldPrice * 0.10);
+  const appFee = Math.floor(fieldPrice * 0.1);
   const uniqueCode = Math.floor(Math.random() * 999) + 1;
   const totalAmount = fieldPrice + appFee + uniqueCode;
 
@@ -233,12 +233,12 @@ export const createReservation = async (formData: FormData) => {
   try {
     await prisma.$transaction(async (tx) => {
       const reservation = await tx.reservation.create({
-        data: { 
-          userId, 
-          fieldId, 
-          startDate, 
-          endDate, 
-          price: fieldPrice 
+        data: {
+          userId,
+          fieldId,
+          startDate,
+          endDate,
+          price: fieldPrice,
         },
       });
 
@@ -246,10 +246,10 @@ export const createReservation = async (formData: FormData) => {
 
       await tx.payment.create({
         data: {
-          amount: totalAmount, 
+          amount: totalAmount,
           status: "UNPAID",
           reservationId: reservation.id,
-          method: null, 
+          method: null,
         },
       });
     });
@@ -273,7 +273,7 @@ export const confirmPayment = async (formData: FormData) => {
   try {
     await prisma.payment.update({
       where: { reservationId },
-      data: { 
+      data: {
         method: paymentMethod,
       },
     });
@@ -294,7 +294,7 @@ export const cancelReservation = async (reservationId: string) => {
       where: { id: reservationId },
     });
 
-    revalidatePath("/field"); 
+    revalidatePath("/field");
   } catch (error) {
     console.error("Gagal cancel booking:", error);
   }
@@ -325,7 +325,7 @@ export const updateReservationStatus = async (formData: FormData) => {
 
 export const getBookedHours = async (fieldId: string, dateStr: string) => {
   const expiredTime = new Date(Date.now() - 15 * 60 * 1000);
-  
+
   const reservations = await prisma.reservation.findMany({
     where: {
       fieldId: fieldId,
@@ -353,7 +353,7 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
     while (currentMs < endMs) {
       // Konversi UTC ke WIB (+7 Jam) buat dapetin string jam yg bener
       const wibDate = new Date(currentMs + 7 * HOUR_MS);
-      
+
       const resDateStr = wibDate.toISOString().split("T")[0]; // YYYY-MM-DD
       const resTimeStr = wibDate.toISOString().split("T")[1].substring(0, 5); // HH:mm
 
@@ -376,7 +376,7 @@ export const getRevenueData = async () => {
   // Ambil semua lapangan beserta reservasi yang SUDAH BAYAR (PAID)
   const fields = await prisma.field.findMany({
     include: {
-      Reservation: {
+      Reservations: {
         where: { Payment: { status: "PAID" } }, // Cuma itung yang udah lunas
         include: { Payment: true },
       },
@@ -384,11 +384,11 @@ export const getRevenueData = async () => {
   });
 
   let totalAppRevenue = 0; // Buat nampung Fee + Kode Unik
-  
+
   const fieldRevenues = fields.map((field) => {
     let fieldIncome = 0;
 
-    field.Reservation.forEach((res) => {
+    field.Reservations.forEach((res) => {
       // 1. Tambahin duit jatah lapangan
       fieldIncome += res.price;
 
@@ -404,7 +404,7 @@ export const getRevenueData = async () => {
       name: field.name,
       image: field.image,
       totalRevenue: fieldIncome,
-      bookingCount: field.Reservation.length,
+      bookingCount: field.Reservations.length,
     };
   });
 
@@ -422,13 +422,13 @@ export const getFieldRevenueDetail = async (fieldId: string) => {
   if (!field) return null;
 
   const reservations = await prisma.reservation.findMany({
-    where: { 
+    where: {
       fieldId: fieldId,
-      Payment: { status: "PAID" } 
+      Payment: { status: "PAID" },
     },
-    include: { 
-      User: true, 
-      Payment: true 
+    include: {
+      User: true,
+      Payment: true,
     },
     orderBy: { startDate: "desc" },
   });
@@ -454,9 +454,9 @@ export const getAppRevenueHistory = async () => {
     const history = reservations.map((res) => {
       const totalPaid = res.Payment?.amount || 0;
       const fieldPrice = res.price;
-      
+
       // Ini logic "cuan" aplikasi lo: Total Transfer - Jatah Lapangan
-      const appRevenue = totalPaid - fieldPrice; 
+      const appRevenue = totalPaid - fieldPrice;
 
       return {
         id: res.id,
@@ -499,7 +499,8 @@ export const createReview = async (formData: FormData) => {
   console.log("📦 Data Review:", { reservationId, fieldId, rating, comment });
 
   if (!rating || !comment) return { error: "Bintang & Komen wajib diisi!" };
-  if (!reservationId || !fieldId) return { error: "Data ID tidak valid (Corrupt)." };
+  if (!reservationId || !fieldId)
+    return { error: "Data ID tidak valid (Corrupt)." };
 
   try {
     // 3. Validasi Booking
@@ -508,7 +509,8 @@ export const createReview = async (formData: FormData) => {
     });
 
     if (!reservation) return { error: "Booking tidak ditemukan." };
-    if (reservation.userId !== session.user.id) return { error: "Bukan bookingan lo!" };
+    if (reservation.userId !== session.user.id)
+      return { error: "Bukan bookingan lo!" };
 
     // 4. Simpan ke Database
     await prisma.review.create({
@@ -522,7 +524,6 @@ export const createReview = async (formData: FormData) => {
     });
 
     console.log("✅ Review sukses masuk DB!");
-
   } catch (error) {
     console.error("🔥 Error Prisma:", error);
     return { error: "Gagal simpan ke database." };
@@ -531,6 +532,6 @@ export const createReview = async (formData: FormData) => {
   // 5. Refresh Halaman (Tanpa Redirect)
   revalidatePath("/myreservation");
   revalidatePath(`/field/${fieldId}`);
-  
+
   return { success: true };
 };

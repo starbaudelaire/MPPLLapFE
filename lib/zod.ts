@@ -1,6 +1,6 @@
 // lib/zod.ts
 import { object, string, array, coerce, nativeEnum } from "zod";
-import { SportType } from "@/app/generated/prisma/client"; //
+import { SportType } from "@prisma/client";
 
 export const FieldSchema = object({
   name: string().min(1, "Name is required"),
