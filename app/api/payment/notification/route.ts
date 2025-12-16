@@ -2,6 +2,9 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+// Definisikan tipe untuk Enum PaymentStatus biar aman (Opsional, tapi Good Practice)
+type PaymentStatus = "UNPAID" | "PAID" | "CANCELLED";
+
 export async function POST(request: Request) {
   // 1. Baca data yang dikirim sama Payment Gateway (Webhook)
   const body = await request.json();
@@ -15,15 +18,16 @@ export async function POST(request: Request) {
   }
 
   // 2. Mapping Status: Bahasa Gateway -> Bahasa Database Kita
-  let dbStatus = "UNPAID";
+  // Default status
+  let dbStatus: PaymentStatus = "UNPAID";
   
   // Kalo statusnya 'settlement' (lunas) atau 'capture' (kartu kredit sukses)
   if (transactionStatus === "settlement" || transactionStatus === "capture") {
     dbStatus = "PAID";
   } 
-  // Kalo gagal/cancel
+  // Kalo gagal/cancel/expire
   else if (transactionStatus === "expire" || transactionStatus === "cancel" || transactionStatus === "deny") {
-    dbStatus = "FAILED";
+    dbStatus = "CANCELLED"; // <--- ✅ FIX: "FAILED" diganti jadi "CANCELLED" sesuai Schema Prisma
   }
 
   try {
@@ -32,7 +36,7 @@ export async function POST(request: Request) {
     await prisma.payment.update({
       where: { reservationId: reservationId }, 
       data: {
-        status: dbStatus,
+        status: dbStatus, // Sekarang aman, nilainya pasti UNPAID, PAID, atau CANCELLED
         method: paymentType || "bank_transfer", // Simpen juga dia bayar pake apa
       },
     });
