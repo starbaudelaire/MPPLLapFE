@@ -17,7 +17,7 @@ const page = () => {
           turns court booking into a smooth digital experience.
         </p>
         <Image
-          src="/lapangan-about.jpg"
+          src="/fotokitablur1.jpeg"
           width={900}
           height={600}
           alt="about image"

@@ -214,3 +214,120 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
     return [];
   }
 };
+
+// ==========================================
+// SECTION 4: REVENUE BY DATE (NEW FEATURE)
+// ==========================================
+
+//
+// Timpa fungsi getRevenueByDate yang lama dengan yang ini:
+
+export const getRevenueByDate = async (dateStr: string) => {
+  // 1. Setup Date Range (WIB Logic)
+  const targetDate = new Date(dateStr);
+  const startOfDay = new Date(targetDate);
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  // Adjust ke UTC bila perlu (Server Time)
+  const offset = 7 * 60 * 60 * 1000;
+  const startWIB = new Date(startOfDay.getTime() - offset);
+  const endWIB = new Date(endOfDay.getTime() - offset);
+
+  try {
+    // 2. Tarik Data Transaksi PAID Hari Itu
+    const payments = await prisma.payment.findMany({
+      where: {
+        status: "PAID",
+        updatedAt: {
+          // Pake waktu pembayaran
+          gte: startWIB,
+          lte: endWIB,
+        },
+      },
+      include: {
+        Reservation: {
+          select: {
+            price: true, // Harga Asli Lapangan
+            fieldId: true,
+            Field: {
+              select: {
+                name: true,
+                image: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 3. Pisahin Duit Kita vs Duit Owner
+    let platformRevenue = 0;
+    let ownerRevenue = 0;
+    const fieldStats: Record<string, any> = {};
+
+    payments.forEach((p) => {
+      const totalBayar = p.amount; // Total yang user transfer (+ kode unik)
+      const hargaLapangan = p.Reservation.price; // Harga asli lapangan
+
+      // Duit Kita = Total Transfer - Harga Asli
+      const cuanKita = totalBayar - hargaLapangan;
+
+      platformRevenue += cuanKita;
+      ownerRevenue += hargaLapangan;
+
+      // Grouping per Lapangan (Buat list di bawah)
+      const fId = p.Reservation.fieldId;
+      if (!fieldStats[fId]) {
+        fieldStats[fId] = {
+          id: fId,
+          name: p.Reservation.Field.name,
+          image: p.Reservation.Field.image || "/card-lapangan.jpg",
+          totalOwnerRevenue: 0, // Pendapatan bersih lapangan
+          bookingCount: 0,
+        };
+      }
+      fieldStats[fId].totalOwnerRevenue += hargaLapangan;
+      fieldStats[fId].bookingCount += 1;
+    });
+
+    // Convert Object ke Array & Sort
+    const fieldRevenues = Object.values(fieldStats).sort(
+      (a: any, b: any) => b.totalOwnerRevenue - a.totalOwnerRevenue
+    );
+
+    return {
+      platformRevenue, // Duit Kita
+      ownerRevenue, // Duit Lapangan
+      totalCombined: platformRevenue + ownerRevenue,
+      fieldRevenues,
+    };
+  } catch (error) {
+    console.error("Error revenue breakdown:", error);
+    return {
+      platformRevenue: 0,
+      ownerRevenue: 0,
+      totalCombined: 0,
+      fieldRevenues: [],
+    };
+  }
+};
+// Tambahin ini di lib/data.ts
+
+// ... (code yang udah ada)
+
+// ==========================================
+// ==========================================
+// SECTION 8: AMENITIES DATA
+// ==========================================
+
+export const getAllAmenities = async () => {
+  try {
+    const amenities = await prisma.amenities.findMany();
+    return amenities;
+  } catch (error) {
+    console.error("Error fetching amenities:", error);
+    return [];
+  }
+};

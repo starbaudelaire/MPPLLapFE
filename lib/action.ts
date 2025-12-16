@@ -7,28 +7,69 @@ import { FieldSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+
+// ==========================================
+// HELPER: UPLOAD IMAGE
+// ==========================================
+async function saveImage(file: File | null): Promise<string> {
+  if (!file || file.size === 0 || file.name === "undefined") return "";
+
+  try {
+    // 1. Siapin Folder public/uploads (kalo belum ada dibuat dulu)
+    const uploadDir = join(process.cwd(), "public/uploads");
+    await mkdir(uploadDir, { recursive: true });
+
+    // 2. Bikin nama file unik (biar gak bentrok)
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const filename = `${Date.now()}_${file.name.replace(/\s/g, "_")}`;
+    const filePath = join(uploadDir, filename);
+
+    // 3. Simpan file
+    await writeFile(filePath, buffer);
+
+    // 4. Balikin URL-nya (String)
+    return `/uploads/${filename}`;
+  } catch (error) {
+    console.error("Gagal upload gambar:", error);
+    return "";
+  }
+}
 
 // ==========================================
 // SECTION 1: ADMIN CRUD FIELD
 // ==========================================
 
-export const saveField = async (_prevState: unknown, formData: FormData) => {
+export const createField = async (_prevState: unknown, formData: FormData) => {
   const amenitiesIds = formData.getAll("amenities") as string[];
 
+  // 1. Upload Gambar Dulu
+  const imageFile = formData.get("image") as File;
+  const imageUrl = await saveImage(imageFile);
+
+  // 2. Siapin Data (Fix Konversi Angka & Mapping Nama)
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
     address: formData.get("address"),
-    capacity: formData.get("capacity"),
-    pricePerHour: formData.get("pricePerHour"),
+    capacity: Number(formData.get("capacity")), // Convert ke Number
+    pricePerHour: Number(formData.get("price")), // Ambil dari input 'price' -> masuk ke 'pricePerHour'
     type: formData.get("type"),
-    image: formData.get("image"),
+    image: imageUrl, // Masukin URL string hasil upload tadi
     amenities: amenitiesIds,
   };
+
+  console.log("📦 [CREATE] Data Processed:", rawData);
 
   const validatedFields = FieldSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
+    console.error(
+      "❌ [CREATE] Zod Error:",
+      validatedFields.error.flatten().fieldErrors
+    );
     return {
       error: validatedFields.error.flatten().fieldErrors,
       message: "Missing Fields. Failed to Create Field.",
@@ -70,16 +111,6 @@ export const saveField = async (_prevState: unknown, formData: FormData) => {
   redirect("/admin/field");
 };
 
-export const deleteField = async (id: string) => {
-  try {
-    await prisma.field.delete({ where: { id } });
-  } catch (error) {
-    console.error("Failed to delete field:", error);
-    return { message: "Database Error: Failed to Delete Field." };
-  }
-  revalidatePath("/admin/field");
-};
-
 export const updateField = async (
   id: string,
   _prevState: unknown,
@@ -87,20 +118,37 @@ export const updateField = async (
 ) => {
   const amenitiesIds = formData.getAll("amenities") as string[];
 
+  // Logic Upload buat Edit:
+  // Cek apakah user upload gambar baru?
+  const imageFile = formData.get("image") as File | string;
+  let finalImageUrl = "";
+
+  // Kalau tipe-nya File dan ada isinya, berarti upload baru
+  if (imageFile instanceof File && imageFile.size > 0) {
+    finalImageUrl = await saveImage(imageFile);
+  } else if (typeof imageFile === "string") {
+    // Kalau string, berarti pake URL lama (dari hidden input)
+    finalImageUrl = imageFile;
+  }
+
   const rawData = {
     name: formData.get("name"),
     description: formData.get("description"),
     address: formData.get("address"),
-    capacity: formData.get("capacity"),
-    pricePerHour: formData.get("pricePerHour"),
+    capacity: Number(formData.get("capacity")),
+    pricePerHour: Number(formData.get("price") || formData.get("pricePerHour")), // Jaga-jaga support 2 nama
     type: formData.get("type"),
-    image: formData.get("image"),
+    image: finalImageUrl,
     amenities: amenitiesIds,
   };
 
   const validatedFields = FieldSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
+    console.error(
+      "❌ [UPDATE] Zod Error:",
+      validatedFields.error.flatten().fieldErrors
+    );
     return {
       error: validatedFields.error.flatten().fieldErrors,
       message: "Missing Fields. Failed to Update Field.",
@@ -142,6 +190,16 @@ export const updateField = async (
 
   revalidatePath("/admin/field");
   redirect("/admin/field");
+};
+
+export const deleteField = async (id: string) => {
+  try {
+    await prisma.field.delete({ where: { id } });
+  } catch (error) {
+    console.error("Failed to delete field:", error);
+    return { message: "Database Error: Failed to Delete Field." };
+  }
+  revalidatePath("/admin/field");
 };
 
 // ==========================================
@@ -319,6 +377,7 @@ export const updateReservationStatus = async (formData: FormData) => {
       where: { reservationId: reservationId },
       data: { status: newStatus },
     });
+    revalidatePath("/admin/revenue");
     revalidatePath("/admin/dashboard");
   } catch (error) {
     console.error("Gagal update status:", error);
@@ -483,11 +542,10 @@ export const getAppRevenueHistory = async () => {
 };
 
 // ==========================================
-// SECTION 6: REVIEW SYSTEM (NEW ADDITION)
+// SECTION 6: REVIEW SYSTEM
 // ==========================================
 
 export const createReview = async (formData: FormData) => {
-  // 1. Debugging: Cek apakah function kepanggil
   console.log("🚀 createReview dipanggil!");
 
   const session = await auth();
@@ -501,7 +559,6 @@ export const createReview = async (formData: FormData) => {
   const rating = parseInt(formData.get("rating") as string);
   const comment = formData.get("comment") as string;
 
-  // 2. Debugging: Cek data yang masuk
   console.log("📦 Data Review:", { reservationId, fieldId, rating, comment });
 
   if (!rating || !comment) return { error: "Bintang & Komen wajib diisi!" };
@@ -509,7 +566,6 @@ export const createReview = async (formData: FormData) => {
     return { error: "Data ID tidak valid (Corrupt)." };
 
   try {
-    // 3. Validasi Booking
     const reservation = await prisma.reservation.findUnique({
       where: { id: reservationId },
     });
@@ -518,7 +574,6 @@ export const createReview = async (formData: FormData) => {
     if (reservation.userId !== session.user.id)
       return { error: "Bukan bookingan lo!" };
 
-    // 4. Simpan ke Database
     await prisma.review.create({
       data: {
         userId: session.user.id,
@@ -535,7 +590,6 @@ export const createReview = async (formData: FormData) => {
     return { error: "Gagal simpan ke database." };
   }
 
-  // 5. Refresh Halaman (Tanpa Redirect)
   revalidatePath("/myreservation");
   revalidatePath(`/field/${fieldId}`);
 
@@ -546,32 +600,26 @@ export const createReview = async (formData: FormData) => {
 // SECTION 7: CONTACT US (MESSAGE)
 // ==========================================
 
-// ✅ Tambahin parameter "_prevState" biar bisa dipake di useActionState
 export const saveMessage = async (_prevState: unknown, formData: FormData) => {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const subject = formData.get("subject") as string;
   const message = formData.get("message") as string;
-  // const phone = formData.get("phone") as string; // Opsional kalau mau dipake
 
-  // 1. Validasi Simple
   if (!name || !email || !message) {
     return { error: "Nama, Email, dan Pesan wajib diisi!" };
   }
 
   try {
-    // 2. Simpan ke Database
     await prisma.message.create({
       data: {
         name,
         email,
         subject: subject || "No Subject",
         message,
-        // phone, // Masukin kalau ada kolom phone
       },
     });
 
-    // 3. Balikin status sukses
     return {
       success: true,
       message: "Pesan berhasil dikirim! Terima Kasih telah menghubungi kami!",

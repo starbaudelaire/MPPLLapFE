@@ -1,133 +1,118 @@
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import {
+  CreateField,
+  DeleteField,
+  UpdateField,
+} from "@/components/admin/field/buttons";
+import { getAllFields } from "@/lib/data";
 import Image from "next/image";
-import { IoAddSharp, IoPencil, IoTrashOutline } from "react-icons/io5";
-import { deleteField } from "@/lib/action";
+import { MapPinIcon, CurrencyDollarIcon } from "@heroicons/react/24/solid";
 
-// --- KOMPONEN DELETE BUTTON (Server Action di Client Component Kecil) ---
-function DeleteButton({ id }: { id: string }) {
-  return (
-    <form
-      action={async () => {
-        "use server";
-        await deleteField(id);
-      }}
-    >
-      <button
-        type="submit"
-        className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200 transition shadow-sm"
-        title="Delete Field"
-        // Tambahin confirm javascript native biar ga kepencet ga sengaja
-        // (Opsional, tapi recommended buat admin)
-      >
-        <IoTrashOutline />
-      </button>
-    </form>
-  );
-}
+export default async function AdminFieldPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ query?: string }>;
+}) {
+  const params = await searchParams;
+  const query = params.query || "";
 
-// ------------------------------------------------
-
-export default async function FieldPage() {
-  // Fetch data terbaru (urutkan dari yang paling baru dibuat)
-  const fields = await prisma.field.findMany({
-    orderBy: { createdAt: "desc" },
-  });
+  const fields = await getAllFields(query);
 
   return (
-    <div className="w-full py-6">
-      {" "}
-      {/* Gak perlu px-4 lagi karena udah dihandle Layout */}
-      {/* HEADER PAGE */}
-      <div className="flex justify-between items-center mb-6">
+    // UPDATED: pb-20 kejauhan, gue ganti pb-10 biar pas. space-y-6 udah cukup.
+    <div className="w-full pb-10 space-y-6">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Manage Fields</h1>
-          <p className="text-sm text-gray-500">
-            Atur daftar lapangan futsal lo disini.
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            Field Manager
+          </h1>
+          <p className="text-gray-500 mt-1 text-lg font-light">
+            Manage your courts, prices, and amenities.
           </p>
         </div>
-        <Link
-          href="/admin/field/create"
-          className="bg-lapang-primary hover:bg-red-600 text-white py-2.5 px-5 rounded-xl flex items-center gap-2 transition-all shadow-md hover:shadow-lg font-medium"
-        >
-          <IoAddSharp className="text-xl" />
-          <span>Add New</span>
-        </Link>
+        <CreateField />
       </div>
-      {/* TABEL DATA */}
-      <div className="overflow-hidden bg-white rounded-xl shadow-sm border border-gray-100">
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-gray-50 text-gray-600 uppercase text-xs font-bold tracking-wider">
-            <tr>
-              <th className="py-4 px-6 border-b">No</th>
-              <th className="py-4 px-6 border-b">Image</th>
-              <th className="py-4 px-6 border-b">Name</th>
-              <th className="py-4 px-6 border-b">Type</th>
-              <th className="py-4 px-6 border-b">Price/Hr</th>
-              <th className="py-4 px-6 border-b text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="text-gray-700 text-sm divide-y divide-gray-100">
-            {fields.map((field, index) => (
-              <tr key={field.id} className="hover:bg-gray-50 transition-colors">
-                <td className="py-4 px-6 font-medium text-gray-400">
-                  {index + 1}
-                </td>
-                <td className="py-4 px-6">
-                  <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
-                    <Image
-                      src={field.image || "/card-lapangan.jpg"}
-                      alt={field.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                </td>
-                <td className="py-4 px-6 font-bold text-gray-900">
+
+      {/* GRID LAYOUT */}
+      {/* UPDATED: gap-8 jadi gap-6 biar lebih rapi */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {fields.map((field) => (
+          <div
+            key={field.id}
+            // UPDATED: Tambah 'flex flex-col' biar card-nya ngisi tinggi grid dengan pinter
+            className="group relative bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col"
+          >
+            {/* Image Header */}
+            {/* UPDATED: h-56 ketinggian buat card compact, h-48 or h-52 is sweet spot */}
+            <div className="relative h-52 w-full bg-gray-100">
+              <Image
+                src={field.image || "/card-lapangan.jpg"}
+                alt={field.name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60" />
+
+              {/* Badge Tipe */}
+              <div className="absolute top-4 left-4">
+                <span className="bg-white/95 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-900 shadow-sm border border-white/20">
+                  {field.type.replace("_", " ")}
+                </span>
+              </div>
+            </div>
+
+            {/* Content Body */}
+            {/* UPDATED: p-6 jadi p-5 biar gap pinggir gak lebay. 'flex-grow' buat dorong footer ke bawah rapi */}
+            <div className="p-5 flex flex-col flex-grow">
+              <div className="mb-3">
+                <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
                   {field.name}
-                </td>
-                <td className="py-4 px-6">
-                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-600 border border-blue-100">
-                    {field.type}
+                </h3>
+                {/* UPDATED: mb-6 kejauhan, mb-1 aja cukup karena udah ada spacing dari container */}
+                <div className="flex items-center text-gray-500 text-sm mt-1">
+                  <MapPinIcon className="w-4 h-4 mr-1.5 text-gray-400 shrink-0" />
+                  <span className="truncate">{field.address}</span>
+                </div>
+              </div>
+
+              {/* Stats Row */}
+              {/* UPDATED: py-4 jadi py-3 biar gap vertical lebih 'tight' */}
+              <div className="flex items-center gap-4 py-3 border-t border-gray-100 mt-auto">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">
+                    Price/Hour
                   </span>
-                </td>
-                <td className="py-4 px-6 font-medium">
-                  Rp {field.pricePerHour.toLocaleString("id-ID")}
-                </td>
-                <td className="py-4 px-6">
-                  <div className="flex justify-center gap-2">
-                    {/* Tombol Edit */}
-                    <Link
-                      href={`/admin/field/edit/${field.id}`}
-                      className="p-2 bg-yellow-100 text-yellow-600 rounded hover:bg-yellow-200 transition shadow-sm"
-                      title="Edit Field"
-                    >
-                      <IoPencil />
-                    </Link>
-
-                    {/* Tombol Delete */}
-                    <DeleteButton id={field.id} />
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-bold text-[#f64e42]">
+                      Rp {field.pricePerHour.toLocaleString("id-ID")}
+                    </span>
                   </div>
-                </td>
-              </tr>
-            ))}
+                </div>
+              </div>
 
-            {/* Empty State */}
-            {fields.length === 0 && (
-              <tr>
-                <td colSpan={6} className="text-center py-12">
-                  <div className="flex flex-col items-center justify-center text-gray-400">
-                    <IoTrashOutline className="text-4xl mb-2 opacity-20" />
-                    <p>Belum ada lapangan nih, Bos.</p>
-                    <p className="text-xs">
-                      Klik tombol "Add New" di atas buat mulai.
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              {/* Action Buttons */}
+              {/* UPDATED: Gak perlu mt-auto lagi karena udah didorong container atas, kasih pt-3 biar misah dikit */}
+              <div className="flex items-center gap-3 pt-3">
+                <div className="flex-1">
+                  <UpdateField id={field.id} />
+                </div>
+                <div className="flex-none">
+                  <DeleteField id={field.id} />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Empty State */}
+        {fields.length === 0 && (
+          <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-300">
+            <p className="text-gray-500 font-medium">No fields found yet.</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Start adding one using the button above.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

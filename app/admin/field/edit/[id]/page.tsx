@@ -1,33 +1,58 @@
 import EditForm from "@/components/admin/field/edit-form";
-import { prisma } from "@/lib/prisma";
+import { getFieldById, getAllAmenities } from "@/lib/data"; // [1] Pastikan ini ke-import!
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 
-// Next.js 15/16: Params itu Promise, jadi harus di-await
-const EditFieldPage = async (props: { params: Promise<{ id: string }> }) => {
-  const params = await props.params;
-  const id = params.id;
+export default async function EditFieldPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
 
-  // Fetch data lapangan + fasilitas yang udah dipilih
-  const field = await prisma.field.findUnique({
-    where: { id },
-    include: { FieldAmenities: true }, 
-  });
-
-  // Fetch semua opsi fasilitas buat checkbox
-  const amenities = await prisma.amenities.findMany();
+  // [2] Tarik dua data sekaligus: Field-nya & List Fasilitas-nya
+  const [field, amenities] = await Promise.all([
+    getFieldById(id),
+    getAllAmenities(),
+  ]);
 
   if (!field) {
     notFound();
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-10 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">Edit Field</h1>
-      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-        <EditForm field={field} amenities={amenities} />
+    <div className="max-w-4xl mx-auto pb-20">
+      <div className="mb-8">
+        <Link
+          href="/admin/field"
+          className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 transition-colors mb-4"
+        >
+          <ChevronLeftIcon className="w-4 h-4 mr-1" /> Back to List
+        </Link>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Edit Arena
+          </h1>
+          <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-mono font-bold">
+            #{id.slice(0, 6)}
+          </span>
+        </div>
+        <p className="text-gray-500 mt-1">
+          Update details for{" "}
+          <span className="font-semibold text-gray-800">{field.name}</span>.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+        <div className="p-8 sm:p-10">
+          {/* [3] INI BIANG KEROKNYA: Jangan lupa oper amenities={amenities} */}
+          <EditForm
+            field={field}
+            amenities={amenities || []} // Kasih '|| []' biar kalo error dia gak bikin crash, cuma kosong doang
+          />
+        </div>
       </div>
     </div>
   );
-};
-
-export default EditFieldPage;
+}

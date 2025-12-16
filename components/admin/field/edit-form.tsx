@@ -1,279 +1,234 @@
 "use client";
 
-import { useActionState, useState, useRef, useTransition } from "react";
+import { useActionState } from "react";
 import { updateField } from "@/lib/action";
-import type { Amenities, Field, FieldAmenities } from "@/app/generated/prisma/client";
-import Image from "next/image";
-import clsx from "clsx";
-import { IoCloudUploadOutline, IoTrashOutline } from "react-icons/io5";
-import { type PutBlobResult } from "@vercel/blob"; // 👈 INI YANG TADINYA KURANG
-
-// List Manual Tipe Olahraga
-const SPORT_TYPES = [
-  "FUTSAL",
-  "BASKETBALL",
-  "BADMINTON",
-  "MINI_SOCCER",
-  "TENNIS",
-];
-
-// Tipe data props: Field + Relasi Amenities-nya
-type FieldWithAmenities = Field & {
-  FieldAmenities: FieldAmenities[];
-};
+import Link from "next/link";
+import {
+  PhotoIcon,
+  MapPinIcon,
+  CurrencyDollarIcon,
+  SparklesIcon,
+  UserGroupIcon, // Icon baru buat Capacity
+} from "@heroicons/react/24/solid";
+import { Amenities } from "@prisma/client";
 
 interface EditFormProps {
-  field: FieldWithAmenities;
+  field: any;
   amenities: Amenities[];
 }
 
-const EditForm = ({ field, amenities }: EditFormProps) => {
-  // Bind ID lapangan ke server action
+const inputClass =
+  "w-full rounded-xl border-gray-200 bg-gray-50/50 p-3 text-sm focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all outline-none";
+const labelClass =
+  "mb-2 block text-xs font-bold text-gray-500 uppercase tracking-wider";
+
+export default function EditForm({ field, amenities = [] }: EditFormProps) {
   const updateFieldWithId = updateField.bind(null, field.id);
-  const [state, formAction, isPending] = useActionState(updateFieldWithId, null);
+  const [state, formAction] = useActionState(updateFieldWithId, null);
 
-  // State awal ambil dari data field yang ada
-  const [imageUrl, setImageUrl] = useState<string>(field.image);
-  const [isUploading, startTransition] = useTransition();
-  const inputFileRef = useRef<HTMLInputElement>(null);
-
-  // Logic Upload Vercel Blob
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files?.[0]) return;
-    const file = event.target.files[0];
-
-    if (file.size > 4 * 1024 * 1024) {
-      alert("File max 4MB");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    startTransition(async () => {
-      try {
-        const response = await fetch("/api/upload", {
-          method: "PUT",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorRes = await response.json();
-          throw new Error(errorRes.message || "Upload failed");
-        }
-
-        const newBlob = (await response.json()) as PutBlobResult;
-        setImageUrl(newBlob.url);
-      } catch (error) {
-        console.error("Upload Error:", error);
-        alert(`Gagal upload: ${error instanceof Error ? error.message : "Unknown error"}`);
-      }
-    });
-  };
-
-  const deleteImage = () => {
-    setImageUrl("");
-    if (inputFileRef.current) inputFileRef.current.value = "";
+  const hasAmenity = (amenityId: string) => {
+    return (
+      field.FieldAmenities?.some((fa: any) => fa.amenitiesId === amenityId) ??
+      false
+    );
   };
 
   return (
-    <form action={formAction} className="space-y-6">
-      {/* --- Image Upload --- */}
-      <div className="grid gap-2">
-        <label className="font-semibold text-gray-700">Field Image</label>
-        <input type="hidden" name="image" value={imageUrl} />
-
-        <div className="flex flex-col md:flex-row items-start gap-4">
-          <div className="relative w-full md:w-64 aspect-video bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden">
-            {imageUrl ? (
-              <>
-                <Image
-                  src={imageUrl}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
-                <button
-                  type="button"
-                  onClick={deleteImage}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded hover:bg-red-600 transition"
-                >
-                  <IoTrashOutline />
-                </button>
-              </>
-            ) : (
-              <div className="text-center p-4">
-                <IoCloudUploadOutline className="mx-auto text-2xl text-gray-400 mb-2" />
-                <span className="text-xs text-gray-500">
-                  Change Image (Max 4MB)
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex-1">
-            <input
-              ref={inputFileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleUpload}
-              disabled={isUploading}
-              className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
-            />
-            {isUploading && (
-              <p className="text-xs text-blue-500 mt-2">Uploading to Vercel...</p>
-            )}
-            <p className="text-sm text-red-500 mt-1">{state?.error?.image}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* --- Basic Info (Pake defaultValue) --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+    <form action={formAction} className="space-y-8">
+      {/* 1. Basic Info */}
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <div className="col-span-full">
+          <label htmlFor="name" className={labelClass}>
             Field Name
           </label>
           <input
+            id="name"
             name="name"
             type="text"
             defaultValue={field.name}
-            className="py-2 px-4 rounded-sm border border-gray-400 w-full"
+            className={inputClass}
+            required
           />
-          <p className="text-red-500 text-xs mt-1">{state?.error?.name}</p>
+        </div>
+
+        {/* TYPE & CAPACITY (Sebelahan) */}
+        <div>
+          <label htmlFor="type" className={labelClass}>
+            Sport Type
+          </label>
+          <div className="relative">
+            <select
+              id="type"
+              name="type"
+              defaultValue={field.type}
+              className={`${inputClass} appearance-none cursor-pointer`}
+            >
+              <option value="FUTSAL">Futsal</option>
+              <option value="BASKETBALL">Basketball</option>
+              <option value="BADMINTON">Badminton</option>
+              <option value="MINI_SOCCER">Mini Soccer</option>
+              <option value="TENNIS">Tennis</option>
+              <option value="VOLLEYBALL">Volleyball</option>
+            </select>
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sport Type
+          <label htmlFor="capacity" className={labelClass}>
+            Capacity (Orang)
           </label>
-          <select
-            name="type"
-            defaultValue={field.type}
-            className="py-2 px-4 rounded-sm border border-gray-400 w-full bg-white"
-          >
-            {SPORT_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-              </option>
-            ))}
-          </select>
-          <p className="text-red-500 text-xs mt-1">{state?.error?.type}</p>
+          <div className="relative">
+            <UserGroupIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            {/* INI YANG TADI ILANG BOSKU 👇 */}
+            <input
+              id="capacity"
+              name="capacity"
+              type="number"
+              defaultValue={field.capacity}
+              className={`${inputClass} pl-10`}
+              placeholder="e.g. 10"
+              min="1"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Price (Full Width di Mobile, Separuh di Desktop) */}
+        <div className="col-span-full md:col-span-1">
+          <label htmlFor="price" className={labelClass}>
+            Price / Hour
+          </label>
+          <div className="relative">
+            <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <input
+              id="price"
+              name="pricePerHour"
+              type="number"
+              defaultValue={field.pricePerHour}
+              className={`${inputClass} pl-10`}
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Address & Desc */}
+      <div>
+        <label htmlFor="address" className={labelClass}>
+          Location Address
+        </label>
+        <div className="relative">
+          <MapPinIcon className="pointer-events-none absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <textarea
+            id="address"
+            name="address"
+            rows={2}
+            defaultValue={field.address}
+            className={`${inputClass} pl-10 resize-none`}
+            required
+          />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="description" className={labelClass}>
           Description
         </label>
         <textarea
+          id="description"
           name="description"
-          rows={3}
+          rows={4}
           defaultValue={field.description}
-          className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-        ></textarea>
-        <p className="text-red-500 text-xs mt-1">
-          {state?.error?.description}
-        </p>
+          className={inputClass}
+          required
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Price / Hour
-          </label>
-          <input
-            name="pricePerHour"
-            type="number"
-            defaultValue={field.pricePerHour}
-            className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-          />
-          <p className="text-red-500 text-xs mt-1">
-            {state?.error?.pricePerHour}
-          </p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Capacity
-          </label>
-          <input
-            name="capacity"
-            type="number"
-            defaultValue={field.capacity}
-            className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-          />
-          <p className="text-red-500 text-xs mt-1">
-            {state?.error?.capacity}
-          </p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location/Address
-          </label>
-          <input
-            name="address"
-            type="text"
-            defaultValue={field.address || ""}
-            className="py-2 px-4 rounded-sm border border-gray-400 w-full"
-          />
-          <p className="text-red-500 text-xs mt-1">{state?.error?.address}</p>
-        </div>
-      </div>
-
-      {/* --- Amenities (Multi Select) --- */}
+      {/* 3. Amenities Checklist */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Amenities / Facilities
-        </label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <label className={labelClass}>Facilities & Amenities</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           {amenities.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center space-x-2 bg-gray-50 border p-2 rounded cursor-pointer hover:bg-gray-100"
-            >
+            <div key={item.id} className="relative">
               <input
                 type="checkbox"
+                id={item.id}
                 name="amenities"
                 value={item.id}
-                id={`amenity-${item.id}`}
-                // Cek apakah amenity ini ada di data field (defaultChecked)
-                defaultChecked={field.FieldAmenities.some(
-                  (fa) => fa.amenitiesId === item.id
-                )}
-                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                defaultChecked={hasAmenity(item.id)}
+                className="peer hidden"
               />
               <label
-                htmlFor={`amenity-${item.id}`}
-                className="text-sm cursor-pointer select-none text-gray-700 capitalize"
+                htmlFor={item.id}
+                className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-xl cursor-pointer transition-all hover:bg-gray-100 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700"
               >
-                {item.name}
+                <SparklesIcon className="w-4 h-4 text-gray-400 peer-checked:text-blue-500" />
+                <span className="text-sm font-medium select-none">
+                  {item.name}
+                </span>
               </label>
             </div>
           ))}
         </div>
+        {amenities.length === 0 && (
+          <div className="p-4 bg-yellow-50 text-yellow-700 text-xs rounded-lg mt-2 flex items-center gap-2">
+            <span>⚠️</span> Data fasilitas kosong di database.
+          </div>
+        )}
       </div>
 
-      {state?.message && (
-        <div className="p-3 bg-red-100 text-red-700 rounded text-sm font-medium">
-          {state.message}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={isPending || isUploading}
-        className={clsx(
-          "w-full py-3 px-4 rounded-md text-white font-bold text-lg transition-all",
-          isPending || isUploading
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
+      {/* 4. Image Logic */}
+      <div>
+        <label htmlFor="image" className={labelClass}>
+          Cover Image
+        </label>
+        {field.image && (
+          <div className="mb-4 relative w-full h-48 rounded-xl overflow-hidden border border-gray-200">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={field.image}
+              alt="Current"
+              className="w-full h-full object-cover"
+            />
+          </div>
         )}
-      >
-        {isPending ? "Updating..." : "Update Field"}
-      </button>
+        <input type="hidden" name="image" value={field.image || ""} />
+        <div className="flex items-center justify-center w-full">
+          <label
+            htmlFor="imageUpload"
+            className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors opacity-70 hover:opacity-100"
+          >
+            <div className="flex flex-row items-center gap-3">
+              <PhotoIcon className="w-6 h-6 text-gray-400" />
+              <p className="text-sm text-gray-500">Change Image (Optional)</p>
+            </div>
+            <input id="imageUpload" type="file" className="hidden" />
+          </label>
+        </div>
+      </div>
+
+      <div aria-live="polite" aria-atomic="true">
+        {state?.message ? (
+          <p className="mt-2 text-sm text-red-500 font-medium">
+            🚫 {state.message}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
+        <Link
+          href="/admin/field"
+          className="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+        >
+          Cancel
+        </Link>
+        <button
+          type="submit"
+          className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold shadow-lg hover:shadow-blue-500/40 transition-all hover:-translate-y-0.5"
+        >
+          Save Changes
+        </button>
+      </div>
     </form>
   );
-};
-
-export default EditForm;
+}
