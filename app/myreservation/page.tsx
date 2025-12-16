@@ -65,7 +65,7 @@ export default async function MyReservationPage() {
           <div className="space-y-6">
             {reservations.map((res) => {
                // LOGIC TAMBAHAN: Cek kondisi booking
-               const isFinished = new Date(res.endDate) < new Date();
+               const isFinished = true;
                const isPaid = res.Payment?.status === "PAID";
                const hasReview = (res as any).Review; // Type assertion kalo TS protes
 

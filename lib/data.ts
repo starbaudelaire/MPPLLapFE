@@ -56,6 +56,7 @@ export const getAllFields = async (
         ],
       },
       orderBy: { createdAt: "desc" },
+      include: { Reviews: true },
     });
     return fields;
   } catch (error) {

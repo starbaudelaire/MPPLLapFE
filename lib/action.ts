@@ -1,3 +1,5 @@
+// lib/action.ts
+
 "use server";
 
 import { auth } from "@/auth";
@@ -570,8 +572,10 @@ export const saveMessage = async (_prevState: unknown, formData: FormData) => {
     });
 
     // 3. Balikin status sukses
-    return { success: true, message: "Pesan berhasil dikirim! Terima Kasih telah menghubungi kami!" };
-    
+    return {
+      success: true,
+      message: "Pesan berhasil dikirim! Terima Kasih telah menghubungi kami!",
+    };
   } catch (error) {
     console.error("Gagal simpan pesan:", error);
     return { error: "Gagal mengirim pesan. Silakan coba lagi nanti." };
