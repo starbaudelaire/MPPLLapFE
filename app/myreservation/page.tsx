@@ -4,13 +4,16 @@ import { redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  CalendarIcon,
+  CalendarDaysIcon,
   ClockIcon,
-  CreditCardIcon,
-  StarIcon,
+  BanknotesIcon,
+  ChatBubbleBottomCenterTextIcon,
+  SparklesIcon,
+  ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
 import ReviewModal from "@/components/field/review-modal";
+import HeaderSection from "@/components/header-section";
 
 export default async function MyReservationPage() {
   const session = await auth();
@@ -18,187 +21,242 @@ export default async function MyReservationPage() {
 
   const reservations = await getUserReservations();
 
-  // Helper function buat warna status (UPDATED: UNPAID jadi proses verifikasi)
-  const getStatusColor = (status: string) => {
+  // Helper Styling Status (Updated Vibe)
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case "PAID":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "UNPAID": // Kita anggap UNPAID sebagai PROSES VERIFIKASI
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return {
+          bg: "bg-emerald-50",
+          text: "text-emerald-700",
+          border: "border-emerald-100",
+          label: "VERIFIED",
+        };
+      case "UNPAID":
+        return {
+          bg: "bg-amber-50",
+          text: "text-amber-700",
+          border: "border-amber-100",
+          label: "VERIFYING",
+        };
       case "CANCELLED":
       case "REJECTED":
-        return "bg-red-100 text-red-700 border-red-200";
+        return {
+          bg: "bg-rose-50",
+          text: "text-rose-700",
+          border: "border-rose-100",
+          label: "DROPPED",
+        };
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "PAID":
-        return "LUNAS";
-      case "UNPAID":
-        return "PROSES VERIFIKASI"; // Ganti Label
-      case "CANCELLED":
-        return "DIBATALKAN";
-      default:
-        return status;
+        return {
+          bg: "bg-gray-50",
+          text: "text-gray-700",
+          border: "border-gray-100",
+          label: status,
+        };
     }
   };
 
   return (
-    // 👇 Tambahin pt-24 biar gak kepotong navbar
-    <div className="min-h-screen bg-gray-50 py-12 pt-24">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Riwayat Booking Saya
-        </h1>
+    <div className="min-h-screen bg-gray-50">
+      {/* 1. Header Section */}
+      <HeaderSection
+        title="Schedules & Bookings"
+      />
 
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {reservations.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl shadow-sm border border-gray-100">
-            <p className="text-gray-500 text-lg">
-              Belum ada bookingan nih, skuy main!
+          <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
+            <div className="mx-auto bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+              <SparklesIcon className="w-10 h-10 text-blue-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              No bookings yet? Seriously?
+            </h3>
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+              Your schedule is literally empty. Let's fix that ASAP and find you
+              a court.
             </p>
             <Link
-              href="/"
-              className="mt-4 inline-block text-lapang-primary font-semibold hover:underline"
+              href="/field"
+              className="inline-flex items-center gap-2 px-8 py-3 bg-[#f64e42] text-white font-semibold rounded-full hover:bg-[#d93d32] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
             >
-              Cari Lapangan Dulu
+              Find a Court Now <ArrowRightIcon className="w-4 h-4" />
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {reservations.map((res) => {
+              const statusStyle = getStatusStyle(
+                res.Payment?.status || "UNPAID"
+              );
               const isPaid = res.Payment?.status === "PAID";
               const hasReview = (res as any).Review;
 
               return (
                 <div
                   key={res.id}
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group"
                 >
-                  <div className="p-6 sm:flex gap-6">
-                    {/* Gambar Lapangan */}
-                    <div className="relative h-32 w-full sm:w-48 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 mb-4 sm:mb-0">
+                  <div className="p-6 sm:flex gap-8">
+                    {/* Thumbnail Image */}
+                    <div className="relative h-48 w-full sm:w-64 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0 mb-6 sm:mb-0 shadow-inner">
                       <Image
                         src={res.Field.image || "/card-lapangan.jpg"}
                         alt={res.Field.name}
                         fill
-                        className="object-cover"
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
                       />
+                      {/* Overlay Gradient */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-60" />
+                      <div className="absolute bottom-3 left-3 text-white">
+                        <p className="text-xs font-medium bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg border border-white/30 inline-block">
+                          {res.Field.type.replace("_", " ")}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Info Booking */}
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {res.Field.name}
-                          </h3>
-                          <p className="text-gray-500 text-sm">
-                            {res.Field.address}
-                          </p>
+                    {/* Booking Details */}
+                    <div className="flex-grow flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="text-2xl font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-[#f64e42] transition-colors">
+                              {res.Field.name}
+                            </h3>
+                            <p className="text-gray-500 text-sm line-clamp-1">
+                              {res.Field.address}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}
+                          >
+                            {statusStyle.label}
+                          </span>
                         </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(
-                            res.Payment?.status || "UNPAID"
-                          )}`}
-                        >
-                          {getStatusLabel(res.Payment?.status || "UNPAID")}
-                        </span>
-                      </div>
 
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <CalendarIcon className="h-4 w-4 text-gray-400" />
-                          {new Date(res.startDate).toLocaleDateString("id-ID", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <ClockIcon className="h-4 w-4 text-gray-400" />
-                          {new Date(res.startDate).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
-                          -
-                          {new Date(res.endDate).toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </div>
-                        <div className="flex items-center gap-2 sm:col-span-2">
-                          <CreditCardIcon className="h-4 w-4 text-gray-400" />
-                          <span className="font-semibold text-gray-900">
-                            Rp {res.price.toLocaleString("id-ID")}
-                          </span>
-                          <span className="text-gray-400 text-xs ml-2">
-                            (Ref: {res.id.slice(0, 8).toUpperCase()})
-                          </span>
+                        <div className="grid grid-cols-1 gap-y-3 text-sm text-gray-600 mt-6">
+                          <div className="flex items-center gap-3">
+                            <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
+                            <span className="font-medium text-gray-900">
+                              {new Date(res.startDate).toLocaleDateString(
+                                "en-GB",
+                                {
+                                  weekday: "long",
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                }
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <ClockIcon className="h-5 w-5 text-gray-400" />
+                            <span>
+                              {new Date(res.startDate).toLocaleTimeString(
+                                "id-ID",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}{" "}
+                              -{" "}
+                              {new Date(res.endDate).toLocaleTimeString(
+                                "id-ID",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 pt-2 border-t border-gray-50 mt-2">
+                            <BanknotesIcon className="h-5 w-5 text-gray-400" />
+                            <span className="font-bold text-[#f64e42] text-lg">
+                              Rp {res.price.toLocaleString("id-ID")}
+                            </span>
+                            <span className="text-gray-300 text-xs ml-auto font-mono">
+                              REF: {res.id.slice(0, 8).toUpperCase()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* === FOOTER ACTION ZONE === */}
+                  {/* === ACTION FOOTER === */}
 
-                  {/* 1. Kalo UNPAID -> Munculin Hubungi Admin (VERIFIKASI) */}
+                  {/* 1. WAITING VERIFICATION */}
                   {res.Payment?.status === "UNPAID" && (
-                    <div className="bg-blue-50 px-6 py-3 border-t border-blue-100 flex items-center justify-between">
-                      <p className="text-xs text-blue-800">
-                        <span className="font-bold">Proses Verifikasi.</span>{" "}
-                        Mohon tunggu admin.
-                      </p>
+                    <div className="bg-amber-50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-amber-100">
+                      <div className="flex items-center gap-3 text-amber-800 text-sm">
+                        <div className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                        </div>
+                        <p>
+                          <span className="font-bold">Payment in review.</span>{" "}
+                          Hang tight, admin is checking your slip.
+                        </p>
+                      </div>
                       <Link
                         href="https://wa.me/6287889387992"
                         target="_blank"
-                        className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1"
+                        className="text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-6 py-2.5 rounded-full transition-all w-full sm:w-auto text-center shadow-md hover:shadow-lg"
                       >
-                        Hubungi Admin &rarr;
+                        Ping Admin on WA
                       </Link>
                     </div>
                   )}
 
-                  {/* 2. Kalo PAID -> Munculin Review (BYPASS LOGIC BUAT TESTING) */}
+                  {/* 2. PAID & REVIEW SECTION */}
                   {isPaid && (
-                    <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between transition-colors hover:bg-gray-100">
+                    <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100 flex items-center justify-between transition-colors hover:bg-gray-50">
                       {hasReview ? (
-                        // Kalo udah review
-                        <div className="flex items-center gap-2 w-full">
-                          <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md">
-                            ✓ Ulasan Terkirim
-                          </span>
-                          <div className="flex text-yellow-400">
-                            {[...Array(5)].map((_, i) => (
-                              <StarSolid
-                                key={i}
-                                className={`h-3 w-3 ${
-                                  i < hasReview.rating ? "" : "text-gray-300"
-                                }`}
-                              />
-                            ))}
+                        <div className="flex items-center gap-4 w-full">
+                          <div className="bg-green-100 text-green-700 p-2 rounded-lg">
+                            <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
                           </div>
-                          <span className="text-xs text-gray-400 ml-auto italic truncate max-w-[200px]">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
+                              Your Rating
+                            </span>
+                            <div className="flex text-yellow-400">
+                              {[...Array(5)].map((_, i) => (
+                                <StarSolid
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < hasReview.rating ? "" : "text-gray-200"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="hidden sm:block h-8 w-px bg-gray-200 mx-2"></div>
+                          <span className="text-sm text-gray-500 italic truncate max-w-xs">
                             "{hasReview.comment}"
                           </span>
                         </div>
                       ) : (
-                        // Kalo BELUM review
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2">
-                            <StarIcon className="h-4 w-4 text-gray-400" />
-                            <p className="text-xs text-gray-600 font-medium">
-                              Gimana mainnya? Kasih bintang dong!
-                            </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-purple-100 p-2 rounded-lg">
+                              <SparklesIcon className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-gray-900">
+                                How was the match?
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Drop a review to help the community.
+                              </p>
+                            </div>
                           </div>
-                          {/* Panggil Component Modal Disini */}
-                          <ReviewModal
-                            reservationId={res.id}
-                            fieldId={res.fieldId}
-                          />
+                          <div className="w-full sm:w-auto">
+                            <ReviewModal
+                              reservationId={res.id}
+                              fieldId={res.fieldId}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

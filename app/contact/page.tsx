@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const ContactPage = () => {
   return (
     <div>
-      <HeaderSection title="Contact Us" />
+      <HeaderSection title="Hit Us Up" />
       <div className="max-w-4xl mx-auto py-20 px-4">
         <div className="text-center mb-16">
           <p className="text-lg text-gray-700 max-w-2xl mx-auto">

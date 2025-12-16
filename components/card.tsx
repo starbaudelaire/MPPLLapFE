@@ -1,69 +1,87 @@
 import Image from "next/image";
 import Link from "next/link";
-// Import tipe Review juga biar gak error TypeScript
-import { Field, Review } from "@prisma/client"; 
+import { Field, Review } from "@prisma/client";
 import { MapPinIcon, StarIcon } from "@heroicons/react/24/solid";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
 interface CardProps {
-  // Kita kasih tau kalo field ini punya data Reviews didalemnya
   field: Field & { Reviews: Review[] };
 }
 
 const Card = ({ field }: CardProps) => {
-  // 1. Logic Hitung Rata-Rata Bintang 🌟
+  // 1. Logic Rating Calculator
   const totalRating = field.Reviews.reduce((acc, review) => acc + review.rating, 0);
   const reviewCount = field.Reviews.length;
   const avgRating = reviewCount > 0 ? (totalRating / reviewCount).toFixed(1) : "0";
 
   return (
     <Link href={`/field/${field.id}`} className="block group h-full">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
-        {/* Bagian Gambar */}
-        <div className="relative h-48 w-full bg-gray-200">
+      {/* CONTAINER STYLE: 
+         - rounded-3xl: Biar lengkungannya sexy ala Apple product.
+         - hover:shadow-2xl: Shadow yang soft banget pas di-hover.
+      */}
+      <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 h-full flex flex-col relative">
+        
+        {/* === IMAGE SECTION (Retina Ready Vibes) === */}
+        <div className="relative h-64 w-full bg-gray-100 overflow-hidden">
           <Image
             src={field.image || "/card-lapangan.jpg"}
             alt={field.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
           />
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-sm uppercase tracking-wide">
-            {field.type.replace("_", " ")}
+          
+          {/* Badge: Glassmorphism Effect ala iOS */}
+          <div className="absolute top-4 left-4">
+             <div className="bg-white/80 backdrop-blur-xl px-4 py-1.5 rounded-full text-[10px] font-bold text-gray-900 shadow-sm uppercase tracking-widest border border-white/20">
+                {field.type.replace("_", " ")}
+             </div>
           </div>
           
-          {/* ✅ TAMBAHAN: Badge Rating di Pojok Kanan Atas Gambar */}
+          {/* Rating Badge: Dark Glass */}
           {reviewCount > 0 && (
-            <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1">
-              <StarIcon className="h-3 w-3 text-yellow-500" />
-              <span>{avgRating}</span>
-              <span className="text-gray-400 font-normal">({reviewCount})</span>
+            <div className="absolute top-4 right-4 flex items-center gap-1 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-white border border-white/10 shadow-lg">
+              <StarIcon className="h-3 w-3 text-yellow-400" />
+              <span className="text-xs font-semibold">{avgRating}</span>
+              <span className="text-[10px] text-gray-300 ml-0.5 font-normal">({reviewCount})</span>
             </div>
           )}
         </div>
 
-        {/* Bagian Konten Bawah */}
-        <div className="p-5 flex flex-col flex-grow justify-between">
+        {/* === CONTENT SECTION (Think Different) === */}
+        <div className="p-6 flex flex-col flex-grow justify-between bg-white relative z-10">
           <div>
-            <div className="flex justify-between items-start mb-1">
-                <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#f64e42] transition-colors line-clamp-1">
+            <div className="mb-3">
+                {/* Title: Clean & Tight Typography */}
+                <h3 className="text-xl font-bold text-gray-900 tracking-tight group-hover:text-gray-600 transition-colors">
                 {field.name}
                 </h3>
-            </div>
-            
-            <div className="flex items-center text-gray-500 text-sm mb-4">
-              <MapPinIcon className="h-4 w-4 mr-1 text-gray-400 flex-shrink-0" />
-              <span className="truncate">{field.address}</span>
+                {/* Address: 'Designed in...' vibe */}
+                <div className="flex items-center text-gray-400 text-xs font-medium mt-1.5">
+                  <MapPinIcon className="h-3.5 w-3.5 mr-1.5 opacity-70" />
+                  <span className="truncate tracking-wide">{field.address}</span>
+                </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
+          {/* Footer: 'One more thing...' */}
+          <div className="flex items-end justify-between pt-6 mt-4 border-t border-gray-50">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-400">Harga per jam</span>
-              <span className="font-bold text-[#f64e42]">
-                Rp {field.pricePerHour.toLocaleString("id-ID")}
+              <span className="text-[10px] uppercase text-gray-400 font-bold tracking-widest mb-1">
+                Start From
               </span>
+              <div className="flex items-baseline gap-1">
+                 <span className="text-xs text-gray-400 font-medium">IDR</span>
+                 <span className="text-xl font-bold text-gray-900 tracking-tight">
+                    {field.pricePerHour.toLocaleString("id-ID")}
+                 </span>
+                 <span className="text-xs text-gray-300 font-medium">/hour</span>
+              </div>
             </div>
-            <div className="bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 group-hover:bg-[#f64e42] group-hover:text-white transition-colors">
-              Book Now
+            
+            {/* The 'iButton': Minimalist Action */}
+            <div className="w-10 h-10 rounded-full bg-gray-50 group-hover:bg-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm group-hover:shadow-lg">
+               <ArrowRightIcon className="h-4 w-4 text-gray-900 group-hover:text-white transition-colors" />
             </div>
           </div>
         </div>
