@@ -17,12 +17,11 @@ export default async function RevenuePage({
 }) {
   const params = await searchParams;
 
-  // 2. 🔥 FIX TIMEZONE: Ambil Waktu 'Today' versi Jakarta (WIB)
+  // 🔥 INI KUNCINYA: Default Date harus WIB ("en-CA" formatnya YYYY-MM-DD)
   const todayWIB = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Jakarta", // Format YYYY-MM-DD sesuai WIB
+    timeZone: "Asia/Jakarta",
   });
 
-  // Kalo ga ada params date, pake hari ini versi WIB
   const dateParam = params.date || todayWIB;
   const currentDate = new Date(dateParam);
 

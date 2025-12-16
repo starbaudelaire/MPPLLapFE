@@ -1,53 +1,53 @@
 import Link from "next/link";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import {
+  CheckCircleIcon,
+  HomeIcon,
+  TicketIcon,
+} from "@heroicons/react/24/solid";
 
-export default async function BookingSuccessPage({
+export default async function SuccessPage({
   searchParams,
 }: {
   searchParams: Promise<{ id?: string }>;
 }) {
-  // Ambil ID reservasi dari URL (dikirim dari action.ts)
-  const params = await searchParams;
-  const reservationId = params.id || "-";
+  const { id } = await searchParams;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center px-4 pt-16">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg text-center border border-gray-100">
-        {/* Icon Sukses */}
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center relative overflow-hidden">
         <div className="flex justify-center mb-6">
-          <CheckCircleIcon className="h-20 w-20 text-green-500 animate-bounce" />
+          <div className="rounded-full bg-green-100 p-4 animate-bounce">
+            <CheckCircleIcon className="w-20 h-20 text-green-500" />
+          </div>
         </div>
-        
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Booking Berhasil!
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+          Payment Successful!
         </h1>
-        <p className="text-gray-500 mb-6">
-          Mantap! Lapangan udah diamankan buat kamu. Jangan lupa datang tepat waktu ya.
+        <p className="text-gray-500 mb-8">
+          Hooray! Your booking has been secured.
         </p>
 
-        {/* Kotak Info ID */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
-          <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">
-            Kode Reservasi
+        <div className="bg-gray-50 rounded-xl p-4 mb-8 border border-gray-200">
+          <p className="text-xs text-gray-400 font-bold uppercase">
+            Booking ID
           </p>
-          <p className="text-lg font-mono font-bold text-gray-800 break-all">
-            {reservationId}
+          <p className="text-xl font-mono font-bold text-gray-800">
+            #{id?.slice(-6).toUpperCase() || "UNKNOWN"}
           </p>
         </div>
 
-        {/* Tombol Navigasi */}
         <div className="space-y-3">
-          <Link 
+          <Link
             href="/myreservation"
-            className="block w-full py-3 px-4 bg-[#f64e42] text-white font-medium rounded-lg hover:bg-[#d93d32] transition shadow-md shadow-orange-200"
+            className="w-full flex items-center justify-center gap-2 bg-[#f64e42] text-white font-bold py-3 rounded-xl shadow-lg hover:-translate-y-1 transition-all"
           >
-            Lihat Jadwal Saya
+            <TicketIcon className="w-5 h-5" /> View Ticket
           </Link>
-          <Link 
+          <Link
             href="/"
-            className="block w-full py-3 px-4 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 transition"
+            className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 font-bold py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all"
           >
-            Kembali ke Home
+            <HomeIcon className="w-5 h-5" /> Back Home
           </Link>
         </div>
       </div>

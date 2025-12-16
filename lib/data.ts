@@ -223,25 +223,29 @@ export const getBookedHours = async (fieldId: string, dateStr: string) => {
 // Timpa fungsi getRevenueByDate yang lama dengan yang ini:
 
 export const getRevenueByDate = async (dateStr: string) => {
-  // 1. Setup Date Range (WIB Logic)
-  const targetDate = new Date(dateStr);
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // dateStr format: "YYYY-MM-DD" (Contoh: "2025-12-16")
 
-  // Adjust ke UTC bila perlu (Server Time)
-  const offset = 7 * 60 * 60 * 1000;
-  const startWIB = new Date(startOfDay.getTime() - offset);
-  const endWIB = new Date(endOfDay.getTime() - offset);
+  // KITA RAKIT MANUAL RANGE WAKTU WIB (UTC+7)
+  // 00:00 WIB = 17:00 UTC (Hari Sebelumnya)
+  // 23:59 WIB = 16:59 UTC (Hari Ini)
+
+  const date = new Date(dateStr);
+
+  // 1. Start Time: H-1 jam 17:00:00 UTC
+  const startWIB = new Date(date);
+  startWIB.setUTCDate(date.getUTCDate() - 1);
+  startWIB.setUTCHours(17, 0, 0, 0);
+
+  // 2. End Time: H+0 jam 16:59:59 UTC
+  const endWIB = new Date(date);
+  endWIB.setUTCHours(16, 59, 59, 999);
 
   try {
-    // 2. Tarik Data Transaksi PAID Hari Itu
     const payments = await prisma.payment.findMany({
       where: {
         status: "PAID",
         updatedAt: {
-          // Pake waktu pembayaran
+          // PAKE UPDATED_AT (Waktu Bayar/Approve)
           gte: startWIB,
           lte: endWIB,
         },
@@ -249,13 +253,10 @@ export const getRevenueByDate = async (dateStr: string) => {
       include: {
         Reservation: {
           select: {
-            price: true, // Harga Asli Lapangan
+            price: true,
             fieldId: true,
             Field: {
-              select: {
-                name: true,
-                image: true,
-              },
+              select: { name: true, image: true },
             },
           },
         },
