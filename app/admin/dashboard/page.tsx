@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
     <div className="space-y-10 pb-20">
       {/* HEADER SECTION - Steve Jobs Vibe */}
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
           Control Center
         </h1>
         <p className="text-gray-500 text-lg font-light tracking-wide">

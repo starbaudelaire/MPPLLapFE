@@ -23,7 +23,7 @@ export default async function AdminFieldPage({
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Field Manager
           </h1>
           <p className="text-gray-500 mt-1 text-lg font-light">
