@@ -2,106 +2,118 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MagnifyingGlassIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 
-export default function SearchFilter() {
+interface SearchFilterProps {
+  transparent?: boolean;
+  buttonLabel?: string;
+}
+
+export default function SearchFilter({
+  transparent = false,
+  buttonLabel = "Start Now",
+}: SearchFilterProps) {
   const router = useRouter();
-  const [sportType, setSportType] = useState("");
-  const [location, setLocation] = useState("");
+  // Menggunakan 'query' untuk menyimpan input lokasi
+  const [query, setQuery] = useState("");
+  const [type, setType] = useState("all");
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    if (sportType) params.set("type", sportType);
-    if (location) params.set("location", location);
+    // 👇 FIX: Mengirim input sebagai 'location' (bukan 'query')
+    if (query) params.set("location", query);
+    if (type && type !== "all") params.set("type", type);
 
-    // UX Logic: Tetep tembak ke halaman /field biar konsisten
     router.push(`/field?${params.toString()}`);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-lg w-full max-w-5xl mx-auto mt-8 mb-8 relative z-10 border border-gray-100">
-      <div className="mb-4">
-        <h3 className="text-lg font-bold text-gray-800">Cari Lapangan</h3>
-        <p className="text-sm text-gray-500">
-          Temukan lapangan olahraga favoritmu.
-        </p>
-      </div>
+    <>
+      {/* CSS HACK: Ini membuat option list jadi putih solid, yang paling aman buat dibaca */}
+      <style jsx global>{`
+        /* Menghilangkan efek hover/focus aneh pada select element */
+        select:focus,
+        select:hover {
+          box-shadow: none !important;
+          outline: none !important;
+        }
+        /* Memaksa background putih pada list opsi */
+        select option {
+          background-color: white !important;
+          color: black !important;
+        }
+      `}</style>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-        {/* Dropdown Tipe */}
-        <div className="md:col-span-4 relative">
-          <label className="text-xs font-semibold text-gray-500 mb-1 block ml-1">
-            Jenis Olahraga
-          </label>
-          <div className="relative">
-            <select
-              className="block w-full px-4 pl-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#f64e42] focus:border-transparent outline-none text-gray-700 appearance-none transition-all bg-gray-50 focus:bg-white"
-              onChange={(e) => setSportType(e.target.value)}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Pilih Olahraga
-              </option>
-              <option value="FUTSAL">Futsal</option>
-              <option value="BASKETBALL">Basket</option>
-              <option value="BADMINTON">Badminton</option>
-              <option value="MINI_SOCCER">Mini Soccer</option>
-              <option value="TENNIS">Tenis</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-              <svg
-                className="w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
-            </div>
-          </div>
+      <div
+        className={`w-full mx-auto p-1.5 rounded-full flex flex-col md:flex-row items-center gap-2 transition-all ${
+          transparent
+            ? "bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl"
+            : "bg-white shadow-lg"
+        }`}
+      >
+        {/* 1. INPUT SEARCH (Lokasi) */}
+        <div className="relative flex-1 w-full group">
+          <MagnifyingGlassIcon
+            className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 ${
+              transparent
+                ? "text-gray-200 group-focus-within:text-white"
+                : "text-gray-400"
+            }`}
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by location"
+            className={`w-full pl-10 pr-4 py-2.5 rounded-full outline-none text-sm transition-colors ${
+              transparent
+                ? "bg-transparent text-white placeholder-gray-300 focus:bg-white/10"
+                : "bg-gray-50 text-gray-900 focus:bg-white"
+            }`}
+          />
         </div>
 
-        {/* Input Lokasi */}
-        <div className="md:col-span-6 relative group">
-          <label className="text-xs font-semibold text-gray-500 mb-1 block ml-1">
-            Lokasi
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MapPinIcon className="h-5 w-5 text-gray-400 group-focus-within:text-[#f64e42]" />
-            </div>
-            <input
-              type="text"
-              placeholder="Misal: Jakarta Selatan"
-              className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#f64e42] focus:border-transparent outline-none text-gray-700 transition-all bg-gray-50 focus:bg-white"
-              onChange={(e) => setLocation(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-          </div>
-        </div>
+        {/* DIVIDER */}
+        <div className="hidden md:block w-px h-6 bg-white/30" />
 
-        {/* Tombol Search - HARDCODE WARNA MERAH */}
-        <div className="md:col-span-2">
-          <button
-            onClick={handleSearch}
-            className="w-full h-[50px] bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all active:scale-95 flex justify-center items-center gap-2"
+        {/* 2. DROPDOWN (Tipe Lapangan) */}
+        <div className="relative w-full md:w-40 group">
+          <ChevronDownIcon
+            className={`absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none transition-transform group-focus-within:rotate-180 ${
+              transparent ? "text-gray-200" : "text-gray-500"
+            }`}
+          />
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            // 👇 Styling untuk Dropdown Ramping
+            className={`w-full appearance-none pl-4 pr-8 py-2.5 rounded-full outline-none text-sm cursor-pointer transition-colors ${
+              transparent
+                ? "bg-transparent text-white focus:bg-white/10"
+                : "bg-gray-50 text-gray-700"
+            }`}
           >
-            <MagnifyingGlassIcon className="h-5 w-5 font-bold" />
-            Cari
-          </button>
+            <option value="all">Types</option>
+            <option value="FUTSAL">Futsal</option>
+            <option value="BASKETBALL">Basket</option>
+            <option value="BADMINTON">Badminton</option>
+            <option value="MINI_SOCCER">Mini Soccer</option>
+            <option value="TENNIS">Tennis</option>
+            <option value="VOLLEYBALL">Volleyball</option>
+          </select>
         </div>
+
+        {/* 3. BUTTON SEARCH */}
+        <button
+          onClick={handleSearch}
+          className="w-full md:w-auto px-6 py-2.5 bg-[#f64e42] hover:bg-[#d63d32] text-white text-sm font-medium rounded-full transition-all transform hover:scale-105 shadow-md whitespace-nowrap"
+        >
+          {buttonLabel}
+        </button>
       </div>
-    </div>
+    </>
   );
 }

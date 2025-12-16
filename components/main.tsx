@@ -1,3 +1,5 @@
+// components/main.tsx
+
 import { getAllFields } from "@/lib/data";
 import Card from "./card";
 
@@ -7,6 +9,8 @@ export default async function Main({
   searchParams: { query?: string; type?: string; location?: string };
 }) {
   // Panggil function sakti dengan 3 filter
+  // Note: searchParams.query sekarang berfungsi sebagai 'name' filter.
+  // searchParams.location sekarang berfungsi sebagai 'address' filter.
   const fields = await getAllFields(
     searchParams.query,
     searchParams.location,

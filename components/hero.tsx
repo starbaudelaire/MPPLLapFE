@@ -1,31 +1,34 @@
 import Image from "next/image";
-import Link from "next/link";
+import SearchFilter from "./home/search-filter";
 
 const Hero = () => {
   return (
-    <div className="relative h-[85vh] text-white overflow-hidden">
-      {/* Background Image dengan Overlay Gradient agar teks terbaca */}
+    <div className="relative h-screen text-white overflow-hidden">
+      {/* Background Image */}
       <div className="absolute inset-0">
         <Image
-          src="/hero.jpg" // Pastikan gambar ini ada di folder public Anda atau gunakan yang ada
-          alt="Sports Field Hero"
+          src="/well-2.png"
+          alt="hero image"
           fill
-          className="object-cover object-center"
+          className="object-cover object-center w-full h-full"
           priority
         />
-        {/* Gradient Overlay: Penting untuk keterbacaan teks di atas gambar apapun */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-black/30" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col justify-center items-center h-full text-center px-4 max-w-5xl mx-auto pb-16">
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 drop-shadow-md">
-          Temukan Lapangan,<br />
-          <span className="text-[#f64e42]">Mulai Permainan.</span>
+      <div className="relative z-10 flex flex-col justify-center items-center h-full text-center px-4">
+        <h1 className="text-4xl md:text-6xl font-semibold leading-tight mb-2 capitalize drop-shadow-md">
+          Secure Your Field
         </h1>
-        <p className="text-lg md:text-2xl text-gray-200 mb-8 max-w-2xl drop-shadow-sm font-light">
-          Booking lapangan futsal, basket, hingga mini soccer dengan mudah dan cepat.
+        <p className="text-xl md:text-3xl font-normal mb-8 drop-shadow-md max-w-2xl text-gray-100">
+          A step closer to your perfect game.
         </p>
+
+        {/* 👇 DIGANTI: Max Width jadi 'max-w-2xl' biar inputnya lega */}
+        <div className="w-full max-w-2xl px-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <SearchFilter transparent buttonLabel="Start Now" />
+        </div>
       </div>
     </div>
   );

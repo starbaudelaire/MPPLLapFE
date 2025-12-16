@@ -7,10 +7,10 @@ import {
   CalendarIcon,
   ClockIcon,
   CreditCardIcon,
-  StarIcon, // Tambah icon bintang
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
-import ReviewModal from "@/components/field/review-modal"; // Import Modal yang tadi dibuat
+import ReviewModal from "@/components/field/review-modal";
 
 export default async function MyReservationPage() {
   const session = await auth();
@@ -18,13 +18,13 @@ export default async function MyReservationPage() {
 
   const reservations = await getUserReservations();
 
-  // Helper function buat warna status (Punya lo tetep dipake)
+  // Helper function buat warna status (UPDATED: UNPAID jadi proses verifikasi)
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PAID":
         return "bg-green-100 text-green-700 border-green-200";
-      case "UNPAID":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "UNPAID": // Kita anggap UNPAID sebagai PROSES VERIFIKASI
+        return "bg-blue-100 text-blue-700 border-blue-200";
       case "CANCELLED":
       case "REJECTED":
         return "bg-red-100 text-red-700 border-red-200";
@@ -35,15 +35,20 @@ export default async function MyReservationPage() {
 
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case "PAID": return "LUNAS";
-      case "UNPAID": return "MENUNGGU PEMBAYARAN";
-      case "CANCELLED": return "DIBATALKAN";
-      default: return status;
+      case "PAID":
+        return "LUNAS";
+      case "UNPAID":
+        return "PROSES VERIFIKASI"; // Ganti Label
+      case "CANCELLED":
+        return "DIBATALKAN";
+      default:
+        return status;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    // 👇 Tambahin pt-24 biar gak kepotong navbar
+    <div className="min-h-screen bg-gray-50 py-12 pt-24">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Riwayat Booking Saya
@@ -64,12 +69,10 @@ export default async function MyReservationPage() {
         ) : (
           <div className="space-y-6">
             {reservations.map((res) => {
-               // LOGIC TAMBAHAN: Cek kondisi booking
-               const isFinished = true;
-               const isPaid = res.Payment?.status === "PAID";
-               const hasReview = (res as any).Review; // Type assertion kalo TS protes
+              const isPaid = res.Payment?.status === "PAID";
+              const hasReview = (res as any).Review;
 
-               return (
+              return (
                 <div
                   key={res.id}
                   className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
@@ -141,57 +144,65 @@ export default async function MyReservationPage() {
                   </div>
 
                   {/* === FOOTER ACTION ZONE === */}
-                  
-                  {/* 1. Kalo UNPAID -> Munculin Konfirmasi WA */}
+
+                  {/* 1. Kalo UNPAID -> Munculin Hubungi Admin (VERIFIKASI) */}
                   {res.Payment?.status === "UNPAID" && (
-                    <div className="bg-yellow-50 px-6 py-3 border-t border-yellow-100 flex items-center justify-between">
-                      <p className="text-xs text-yellow-800">
-                        Menunggu pembayaran.
+                    <div className="bg-blue-50 px-6 py-3 border-t border-blue-100 flex items-center justify-between">
+                      <p className="text-xs text-blue-800">
+                        <span className="font-bold">Proses Verifikasi.</span>{" "}
+                        Mohon tunggu admin.
                       </p>
                       <Link
                         href="https://wa.me/6287889387992"
                         target="_blank"
-                        className="text-xs font-bold text-yellow-700 hover:underline"
+                        className="text-xs font-bold text-blue-700 hover:underline flex items-center gap-1"
                       >
-                        Bayar Sekarang &rarr;
+                        Hubungi Admin &rarr;
                       </Link>
                     </div>
                   )}
 
-                  {/* 2. Kalo PAID & SUDAH MAIN -> Munculin Review */}
-                  {isPaid && isFinished && (
+                  {/* 2. Kalo PAID -> Munculin Review (BYPASS LOGIC BUAT TESTING) */}
+                  {isPaid && (
                     <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 flex items-center justify-between transition-colors hover:bg-gray-100">
-                        {hasReview ? (
-                            // Kalo udah review
-                            <div className="flex items-center gap-2 w-full">
-                                <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md">
-                                    ✓ Ulasan Terkirim
-                                </span>
-                                <div className="flex text-yellow-400">
-                                    {[...Array(5)].map((_, i) => (
-                                        <StarSolid key={i} className={`h-3 w-3 ${i < hasReview.rating ? "" : "text-gray-300"}`} />
-                                    ))}
-                                </div>
-                                <span className="text-xs text-gray-400 ml-auto italic truncate max-w-[200px]">
-                                    "{hasReview.comment}"
-                                </span>
-                            </div>
-                        ) : (
-                            // Kalo BELUM review
-                            <div className="flex items-center justify-between w-full">
-                                <div className="flex items-center gap-2">
-                                    <StarIcon className="h-4 w-4 text-gray-400" />
-                                    <p className="text-xs text-gray-600 font-medium">
-                                        Gimana mainnya? Kasih bintang dong!
-                                    </p>
-                                </div>
-                                {/* Panggil Component Modal Disini */}
-                                <ReviewModal reservationId={res.id} fieldId={res.fieldId} />
-                            </div>
-                        )}
+                      {hasReview ? (
+                        // Kalo udah review
+                        <div className="flex items-center gap-2 w-full">
+                          <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-md">
+                            ✓ Ulasan Terkirim
+                          </span>
+                          <div className="flex text-yellow-400">
+                            {[...Array(5)].map((_, i) => (
+                              <StarSolid
+                                key={i}
+                                className={`h-3 w-3 ${
+                                  i < hasReview.rating ? "" : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-400 ml-auto italic truncate max-w-[200px]">
+                            "{hasReview.comment}"
+                          </span>
+                        </div>
+                      ) : (
+                        // Kalo BELUM review
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <StarIcon className="h-4 w-4 text-gray-400" />
+                            <p className="text-xs text-gray-600 font-medium">
+                              Gimana mainnya? Kasih bintang dong!
+                            </p>
+                          </div>
+                          {/* Panggil Component Modal Disini */}
+                          <ReviewModal
+                            reservationId={res.id}
+                            fieldId={res.fieldId}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
-
                 </div>
               );
             })}

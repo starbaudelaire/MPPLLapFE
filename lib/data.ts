@@ -2,10 +2,10 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // ==========================================
-// SECTION 1: CUSTOMER DATA (Dev 3)
+// SECTION 1: CUSTOMER DATA
 // ==========================================
 
-// 1. Ambil SATU lapangan (untuk Halaman Detail)
+// 1. Ambil SATU lapangan (untuk Halaman Detail / Edit)
 export const getFieldById = async (id: string) => {
   try {
     const field = await prisma.field.findUnique({
@@ -33,30 +33,23 @@ export const getAllFields = async (
     const fields = await prisma.field.findMany({
       where: {
         AND: [
-          // 1. Filter Nama Lapangan (Query Utama)
-          query
-            ? {
-                name: { contains: query, mode: "insensitive" },
-              }
-            : {},
-
-          // 2. Filter Lokasi (Cari teks di dalam alamat)
+          // Filter Nama
+          query ? { name: { contains: query, mode: "insensitive" } } : {},
+          // Filter Lokasi
           location
-            ? {
-                address: { contains: location, mode: "insensitive" },
-              }
+            ? { address: { contains: location, mode: "insensitive" } }
             : {},
-
-          // 3. Filter Tipe Olahraga (Harus persis, misal "FUTSAL")
-          type && type !== "all"
-            ? {
-                type: type as any,
-              }
-            : {},
+          // Filter Tipe
+          type && type !== "all" ? { type: type as any } : {},
         ],
       },
       orderBy: { createdAt: "desc" },
-      include: { Reviews: true },
+      // Include Rating buat di Card
+      include: {
+        Reviews: {
+          select: { rating: true },
+        },
+      },
     });
     return fields;
   } catch (error) {
@@ -88,23 +81,15 @@ export const getUserReservations = async () => {
 };
 
 // ==========================================
-// SECTION 2: ADMIN DASHBOARD DATA (Dev 4)
+// SECTION 2: ADMIN DASHBOARD DATA (YANG TADI HILANG)
 // ==========================================
 
-// 4. Hitung Pendapatan Hari Ini (FIXED WIB VERSION)
+// 4. Hitung Pendapatan Hari Ini
 export const getTodayRevenue = async () => {
-  // Trik: Kita geser waktu server (UTC) ke WIB dulu buat nentuin "Hari ini tanggal berapa"
   const now = new Date();
-  const offsetWIB = 7 * 60 * 60 * 1000; // 7 Jam dalam milisecond
-
-  // Ini waktu "sekarang" seolah-olah kita di Jakarta
+  const offsetWIB = 7 * 60 * 60 * 1000;
   const nowWIB = new Date(now.getTime() + offsetWIB);
-
-  // Set jam 00:00:00 WIB
   nowWIB.setUTCHours(0, 0, 0, 0);
-
-  // Balikin lagi ke UTC biar query DB-nya bener
-  // Jadi kalo di Indo tgl 15 jam 00:00, di DB kita cari data mulai tgl 14 jam 17:00 UTC
   const startOfDayUTC = new Date(nowWIB.getTime() - offsetWIB);
 
   try {
@@ -113,7 +98,7 @@ export const getTodayRevenue = async () => {
       where: {
         status: "PAID",
         createdAt: {
-          gte: startOfDayUTC, // <-- Pake waktu yang udah dikoreksi
+          gte: startOfDayUTC,
         },
       },
     });
@@ -148,9 +133,9 @@ export const getAllReservations = async () => {
   try {
     const reservations = await prisma.reservation.findMany({
       include: {
-        User: true, // Biar tau siapa yang booking
-        Field: true, // Biar tau lapangan apa
-        Payment: true, // Biar tau status bayar
+        User: true,
+        Field: true,
+        Payment: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -161,53 +146,66 @@ export const getAllReservations = async () => {
   }
 };
 
-// lib/data.ts
-
-// ... (Kodingan atas biarin sama)
-
 // ==========================================
-// SECTION 3: BOOKING HELPERS (NEW)
+// SECTION 3: BOOKING HELPERS (FIXED LOOP LOGIC)
 // ==========================================
 
 export const getBookedHours = async (fieldId: string, dateStr: string) => {
   if (!dateStr || !fieldId) return [];
 
-  // 1. Tentukan Range Jam 00:00 - 23:59 WIB pada tanggal tersebut
   const [year, month, day] = dateStr.split("-").map(Number);
-
-  // Start: Jam 00:00 WIB (UTC-7)
+  // Start: Jam 00:00 WIB
   const startOfDay = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
-
-  // End: Jam 23:59 WIB (UTC-7 besoknya dikit)
+  // End: Jam 23:59 WIB
   const endOfDay = new Date(Date.UTC(year, month - 1, day, 16, 59, 59));
 
   try {
     const reservations = await prisma.reservation.findMany({
       where: {
         fieldId: fieldId,
-        startDate: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
+        // Cari yang overlap dengan hari ini
+        startDate: { lte: endOfDay },
+        endDate: { gte: startOfDay },
         OR: [
-          { Payment: { status: "PAID" } }, // Yang udah bayar
-          { Payment: { status: "UNPAID" } }, // Yang booking tapi belum bayar (masih nunggu)
+          { Payment: { status: "PAID" } },
+          { Payment: { status: "UNPAID" } },
         ],
       },
       select: {
         startDate: true,
+        endDate: true,
       },
     });
 
-    // 2. Ambil jam-nya aja dari data reservasi
-    // Kita convert balik ke jam WIB (Human Readable) buat dikirim ke Frontend
-    const bookedHours = reservations.map((res) => {
-      // res.startDate itu UTC. Kita ubah ke string jam WIB.
-      // Contoh: UTC 03:00 -> WIB 10:00
-      const dateInWIB = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
-      const hour = dateInWIB.getUTCHours();
-      // Format jadi "08:00", "10:00"
-      return `${hour.toString().padStart(2, "0")}:00`;
+    const bookedHours: string[] = [];
+
+    reservations.forEach((res) => {
+      // Convert ke WIB
+      let current = new Date(res.startDate.getTime() + 7 * 60 * 60 * 1000);
+      const end = new Date(res.endDate.getTime() + 7 * 60 * 60 * 1000);
+
+      // Loop per jam dari Start sampai End
+      while (current < end) {
+        const currentYear = current.getUTCFullYear();
+        const currentMonth = current.getUTCMonth() + 1;
+        const currentDay = current.getUTCDate();
+
+        // Pastikan jamnya masih di tanggal yang dipilih (biar gak bocor ke besok/kemarin)
+        if (
+          currentYear === year &&
+          currentMonth === month &&
+          currentDay === day
+        ) {
+          const hour = current.getUTCHours();
+          const hourStr = `${hour.toString().padStart(2, "0")}:00`;
+
+          if (!bookedHours.includes(hourStr)) {
+            bookedHours.push(hourStr);
+          }
+        }
+        // Tambah 1 jam
+        current.setUTCHours(current.getUTCHours() + 1);
+      }
     });
 
     return bookedHours;
