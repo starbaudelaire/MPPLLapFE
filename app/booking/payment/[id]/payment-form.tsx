@@ -2,13 +2,14 @@
 
 import { confirmPayment } from "@/lib/action";
 import { useState, useEffect } from "react";
-import Image from "next/image"; // Jangan lupa import Image
+import Image from "next/image";
 import {
   QrCodeIcon,
   BuildingLibraryIcon,
   CheckCircleIcon,
   ExclamationCircleIcon,
   ClockIcon,
+  DocumentDuplicateIcon, // Icon buat copy
 } from "@heroicons/react/24/outline";
 
 export default function PaymentForm({
@@ -23,10 +24,20 @@ export default function PaymentForm({
     type: "ok" | "err";
   } | null>(null);
 
-  // --- LOGIC COUNTDOWN (30 MENIT) ---
-  const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 menit dalam detik
+  // STATE BUAT RANDOM VA
+  const [vaNumber, setVaNumber] = useState("Loading...");
+
+  // LOGIC TIMER 30 MENIT
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
 
   useEffect(() => {
+    // 1. Generate Nomor VA Random (Format: 8800 + 8 digit acak)
+    const randomSuffix = Math.floor(
+      10000000 + Math.random() * 90000000
+    ).toString();
+    setVaNumber(`8800${randomSuffix}`);
+
+    // 2. Timer Logic
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -38,7 +49,12 @@ export default function PaymentForm({
     const s = seconds % 60;
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
-  // ----------------------------------
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setToast({ msg: "Copied to clipboard!", type: "ok" });
+    setTimeout(() => setToast(null), 2000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +63,7 @@ export default function PaymentForm({
     formData.append("reservationId", reservationId);
     formData.append("paymentMethod", selected);
 
-    // Simulasi delay biar user ngerasa lagi "verifikasi"
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500)); // Simulasi loading
 
     const res = await confirmPayment(formData);
     if (res?.error) {
@@ -56,7 +71,6 @@ export default function PaymentForm({
       setLoading(false);
     } else {
       setToast({ msg: "Payment Confirmed! Redirecting...", type: "ok" });
-      // Redirect otomatis handled by server action
     }
   };
 
@@ -69,29 +83,29 @@ export default function PaymentForm({
     },
     {
       id: "TRANSFER",
-      name: "Bank Transfer",
+      name: "Virtual Account",
       icon: BuildingLibraryIcon,
-      desc: "BCA, Mandiri",
+      desc: "Auto-check (BCA, Mandiri, BNI)",
     },
   ];
 
   return (
     <div className="relative space-y-6">
-      {/* --- COUNTDOWN TIMER --- */}
-      <div className="flex items-center justify-between bg-orange-50 border border-orange-100 p-4 rounded-xl">
+      {/* COUNTDOWN */}
+      <div className="flex items-center justify-between bg-orange-50 border border-orange-100 p-4 rounded-xl animate-in slide-in-from-top-2">
         <div className="flex items-center gap-2 text-orange-700">
           <ClockIcon className="w-5 h-5 animate-pulse" />
-          <span className="text-sm font-bold">Complete payment in</span>
+          <span className="text-sm font-bold">Pay before</span>
         </div>
         <span className="text-xl font-mono font-bold text-orange-600 bg-white px-3 py-1 rounded-lg border border-orange-100 shadow-sm">
           {formatTime(timeLeft)}
         </span>
       </div>
 
-      {/* --- TOAST NOTIFICATION --- */}
+      {/* TOAST */}
       {toast && (
         <div
-          className={`absolute -top-24 left-0 right-0 p-3 rounded-xl flex items-center gap-2 shadow-lg animate-in fade-in slide-in-from-top-4 ${
+          className={`absolute -top-24 left-0 right-0 p-3 rounded-xl flex items-center gap-2 shadow-lg animate-in fade-in slide-in-from-top-4 z-50 ${
             toast.type === "ok"
               ? "bg-green-100 text-green-700 border border-green-200"
               : "bg-red-100 text-red-700 border border-red-200"
@@ -113,8 +127,7 @@ export default function PaymentForm({
             <label
               className={`flex items-center p-4 border-2 cursor-pointer transition-all duration-300 ${
                 selected === m.id
-                  ? // Kalo dipilih, border bawah ilang (rounded-b-none) biar nyambung sama konten bawahnya
-                    "border-[#f64e42] bg-red-50/10 rounded-t-2xl rounded-b-none border-b-0"
+                  ? "border-[#f64e42] bg-red-50/10 rounded-t-2xl rounded-b-none border-b-0"
                   : "border-gray-100 hover:bg-gray-50 rounded-2xl"
               }`}
             >
@@ -150,11 +163,10 @@ export default function PaymentForm({
               )}
             </label>
 
-            {/* EXPANDABLE CONTENT (BUAT QRIS) */}
+            {/* QRIS CONTENT */}
             {selected === m.id && m.id === "QRIS" && (
               <div className="border-2 border-t-0 border-[#f64e42] rounded-b-2xl p-6 bg-white animate-in slide-in-from-top-2 flex flex-col items-center gap-4">
                 <div className="relative w-48 h-48 bg-white p-2 rounded-xl border border-gray-200 shadow-inner">
-                  {/* Ganti src="/qris.jpg" sesuai file lu */}
                   <Image
                     src="/qris.jpg"
                     alt="QRIS Code"
@@ -163,40 +175,41 @@ export default function PaymentForm({
                   />
                 </div>
                 <p className="text-xs text-center text-gray-500 font-medium">
-                  Scan QR code above using your preferred e-wallet app.
+                  Scan QR code above.
                   <br />
                   <span className="text-orange-500">
-                    Wait for verification after payment.
+                    Verification takes ~2 mins.
                   </span>
                 </p>
               </div>
             )}
 
-            {/* EXPANDABLE CONTENT (BUAT TRANSFER - OPTIONAL) */}
+            {/* VA CONTENT (RANDOMIZED) */}
             {selected === m.id && m.id === "TRANSFER" && (
-              <div className="border-2 border-t-0 border-[#f64e42] rounded-b-2xl p-6 bg-white animate-in slide-in-from-top-2 space-y-3">
-                <div className="bg-gray-50 p-3 rounded-lg flex justify-between items-center border border-gray-200">
+              <div className="border-2 border-t-0 border-[#f64e42] rounded-b-2xl p-6 bg-white animate-in slide-in-from-top-2 space-y-4">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center group/copy hover:border-blue-300 transition-colors">
                   <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase">
-                      Bank BCA
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                      BCA Virtual Account
                     </p>
-                    <p className="text-lg font-mono font-bold text-gray-800">
-                      123-456-7890
+                    <p className="text-xl font-mono font-bold text-gray-800 tracking-wide">
+                      {vaNumber}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 mt-1">
                       a.n. Lapang.in Official
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => navigator.clipboard.writeText("1234567890")}
-                    className="text-xs text-[#f64e42] font-bold hover:underline"
+                    onClick={() => handleCopy(vaNumber)}
+                    className="p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-500 hover:text-blue-500 transition-all text-gray-400"
                   >
-                    COPY
+                    <DocumentDuplicateIcon className="w-5 h-5" />
                   </button>
                 </div>
                 <p className="text-xs text-center text-gray-500">
-                  Transfer exact amount to the account above.
+                  Transfer exact amount. Your booking will be verified
+                  automatically.
                 </p>
               </div>
             )}
@@ -206,14 +219,12 @@ export default function PaymentForm({
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-6 bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold py-4 rounded-xl shadow-lg shadow-red-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full mt-6 bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
               <svg
                 className="animate-spin h-5 w-5 text-white"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
                 viewBox="0 0 24 24"
               >
                 <circle
@@ -230,7 +241,7 @@ export default function PaymentForm({
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 ></path>
               </svg>
-              Processing...
+              Verifying...
             </>
           ) : (
             "I Have Paid"
