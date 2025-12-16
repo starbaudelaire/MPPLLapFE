@@ -3,7 +3,8 @@ import SearchFilter from "./home/search-filter";
 
 const Hero = () => {
   return (
-    <div className="relative h-screen text-white overflow-hidden">
+    // DIUBAH: h-screen menjadi h-[72vh] (Ini tetap)
+    <div className="relative h-[72vh] text-white overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0">
         <Image
@@ -25,7 +26,7 @@ const Hero = () => {
           A step closer to your perfect game.
         </p>
 
-        {/* 👇 DIGANTI: Max Width jadi 'max-w-2xl' biar inputnya lega */}
+        {/* Search Filter Component */}
         <div className="w-full max-w-2xl px-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
           <SearchFilter transparent buttonLabel="Start Now" />
         </div>
