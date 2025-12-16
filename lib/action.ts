@@ -1,3 +1,5 @@
+// lib/action.ts
+
 "use server";
 
 import { auth } from "@/auth";
@@ -538,4 +540,44 @@ export const createReview = async (formData: FormData) => {
   revalidatePath(`/field/${fieldId}`);
 
   return { success: true };
+};
+
+// ==========================================
+// SECTION 7: CONTACT US (MESSAGE)
+// ==========================================
+
+// ✅ Tambahin parameter "_prevState" biar bisa dipake di useActionState
+export const saveMessage = async (_prevState: unknown, formData: FormData) => {
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const subject = formData.get("subject") as string;
+  const message = formData.get("message") as string;
+  // const phone = formData.get("phone") as string; // Opsional kalau mau dipake
+
+  // 1. Validasi Simple
+  if (!name || !email || !message) {
+    return { error: "Nama, Email, dan Pesan wajib diisi!" };
+  }
+
+  try {
+    // 2. Simpan ke Database
+    await prisma.message.create({
+      data: {
+        name,
+        email,
+        subject: subject || "No Subject",
+        message,
+        // phone, // Masukin kalau ada kolom phone
+      },
+    });
+
+    // 3. Balikin status sukses
+    return {
+      success: true,
+      message: "Pesan berhasil dikirim! Terima Kasih telah menghubungi kami!",
+    };
+  } catch (error) {
+    console.error("Gagal simpan pesan:", error);
+    return { error: "Gagal mengirim pesan. Silakan coba lagi nanti." };
+  }
 };
