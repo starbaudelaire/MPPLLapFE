@@ -107,7 +107,7 @@ export default async function FieldDetailPage({
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {field.FieldAmenities.map((item) => (
                     <div
-                      key={item.id}
+                      key={item.amenitiesId}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
                     >
                       <div className="h-2 w-2 rounded-full bg-[#f64e42]" />

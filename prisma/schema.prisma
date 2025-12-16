@@ -143,6 +143,7 @@ model Reservation {
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   Field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   Payment   Payment?
+  Review    Review?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -167,10 +168,13 @@ model Review {
   comment   String   @db.Text
   userId    String
   fieldId   String
+  reservationId String   @unique
   createdAt DateTime @default(now())
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   field Field @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  Reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
 }
 
 // MODEL TAMBAHAN BUAT CONTACT US (Biar bisa simpen no HP)

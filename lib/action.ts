@@ -232,6 +232,7 @@ export const createReservation = async (formData: FormData) => {
 
   try {
     await prisma.$transaction(async (tx) => {
+      // 1. Buat Reservasi
       const reservation = await tx.reservation.create({
         data: {
           userId,
@@ -244,12 +245,15 @@ export const createReservation = async (formData: FormData) => {
 
       reservationId = reservation.id;
 
+      // 2. Buat Payment (FIXED: Pake connect)
       await tx.payment.create({
         data: {
           amount: totalAmount,
           status: "UNPAID",
-          reservationId: reservation.id,
-          method: null,
+          method: "QRIS",
+          Reservation: {
+            connect: { id: reservation.id },
+          },
         },
       });
     });
