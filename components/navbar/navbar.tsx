@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { IoClose, IoMenu, IoPersonOutline } from "react-icons/io5";
+import { QrCodeIcon } from "@heroicons/react/24/outline"; // 👈 Import Icon QR
 import clsx from "clsx";
 import { useSession, signOut } from "next-auth/react";
 
@@ -105,12 +106,24 @@ const Navbar = () => {
             </>
           )}
 
-          <Link
-            href="/about"
-            className="font-light text-sm text-white hover:text-primary"
-          >
-            About
-          </Link>
+          {/* 👇 LOGIC: ABOUT vs SCAN QR 👇 */}
+          {isAdmin ? (
+            <Link
+              href="/admin/scan"
+              className="font-light text-sm text-white hover:text-primary flex items-center gap-1"
+            >
+              <QrCodeIcon className="w-4 h-4" /> {/* Icon QR Biar Keren */}
+              Scan QR
+            </Link>
+          ) : (
+            <Link
+              href="/about"
+              className="font-light text-sm text-white hover:text-primary"
+            >
+              About
+            </Link>
+          )}
+          {/* 👆 END LOGIC 👆 */}
 
           {/* 5. CONTACT (Cuma buat user biasa) */}
           {!isAdmin && (
@@ -192,7 +205,11 @@ const Navbar = () => {
             onClick={() => setOpen(!open)}
             className="inline-flex items-center p-2 justify-center text-sm rounded-md text-white hover:bg-black/10"
           >
-            {!open ? <IoMenu className="size-8" /> : <IoClose className="size-8" />}
+            {!open ? (
+              <IoMenu className="size-8" />
+            ) : (
+              <IoClose className="size-8" />
+            )}
           </button>
         </div>
       </div>
@@ -276,15 +293,27 @@ const Navbar = () => {
             </>
           )}
 
+          {/* 👇 LOGIC MOBILE: ABOUT vs SCAN QR 👇 */}
           <li>
-            <Link
-              href="/about"
-              className="block py-2 px-3 hover:text-primary"
-              onClick={() => setOpen(false)}
-            >
-              About
-            </Link>
+            {isAdmin ? (
+              <Link
+                href="/admin/scan"
+                className="block py-2 px-3 hover:text-primary flex items-center gap-2"
+                onClick={() => setOpen(false)}
+              >
+                <QrCodeIcon className="w-5 h-5 inline" /> Scan QR Ticket
+              </Link>
+            ) : (
+              <Link
+                href="/about"
+                className="block py-2 px-3 hover:text-primary"
+                onClick={() => setOpen(false)}
+              >
+                About
+              </Link>
+            )}
           </li>
+          {/* 👆 END LOGIC MOBILE 👆 */}
 
           {/* Logic Contact Mobile */}
           {!isAdmin && (

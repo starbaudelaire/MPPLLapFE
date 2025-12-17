@@ -629,3 +629,57 @@ export const saveMessage = async (_prevState: unknown, formData: FormData) => {
     return { error: "Gagal mengirim pesan. Silakan coba lagi nanti." };
   }
 };
+
+//
+
+// ... codingan yang lain biarin ...
+
+// ==========================================
+// SECTION 8: ADMIN SCANNER (VALIDASI TIKET)
+// ==========================================
+
+export const verifyTicket = async (qrCode: string) => {
+  // Format QR kita kan: "BOOKING-clqxxxxx..."
+  // Jadi kita harus buang prefix "BOOKING-" dulu
+  const bookingId = qrCode.replace("BOOKING-", "");
+
+  if (!bookingId) return { error: "QR Code tidak valid/kosong." };
+
+  try {
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: bookingId },
+      include: {
+        User: true,
+        Field: true,
+        Payment: true,
+      },
+    });
+
+    if (!reservation) {
+      return { error: "Booking TIDAK DITEMUKAN dalam database!" };
+    }
+
+    // Cek Status Pembayaran
+    if (reservation.Payment?.status !== "PAID") {
+      return { 
+        error: "Booking BELUM LUNAS / Dibatalkan!", 
+        details: reservation // Balikin data biar admin tau ini punya siapa
+      };
+    }
+
+    // Cek Tanggal (Optional: Kalo mau strict cuma bisa scan hari H)
+    // const today = new Date().toISOString().split("T")[0];
+    // const bookingDate = reservation.startDate.toISOString().split("T")[0];
+    // if (today !== bookingDate) return { error: "Tiket bukan untuk hari ini!" };
+
+    return { 
+      success: true, 
+      message: "TIKET VALID! Silakan Masuk.", 
+      data: reservation 
+    };
+
+  } catch (error) {
+    console.error("Scan Error:", error);
+    return { error: "Terjadi kesalahan server saat validasi." };
+  }
+};
