@@ -1,271 +1,29 @@
 import { auth } from "@/auth";
 import { getUserReservations } from "@/lib/data";
 import { redirect } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
-import {
-  CalendarDaysIcon,
-  ClockIcon,
-  BanknotesIcon,
-  ChatBubbleBottomCenterTextIcon,
-  SparklesIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/24/outline";
-import { StarIcon as StarSolid } from "@heroicons/react/24/solid";
-import ReviewModal from "@/components/field/review-modal";
 import HeaderSection from "@/components/header-section";
+import MyReservationList from "@/components/my-reservation-list"; // Import komponen baru
 
 export default async function MyReservationPage() {
+  // 1. Cek Auth di Server
   const session = await auth();
   if (!session) redirect("/signin");
 
-  const reservations = await getUserReservations();
+  // 2. Ambil Data (Aman karena ini Server Component)
+  const rawReservations = await getUserReservations();
 
-  // Helper Styling Status (Updated Vibe)
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case "PAID":
-        return {
-          bg: "bg-emerald-50",
-          text: "text-emerald-700",
-          border: "border-emerald-100",
-          label: "VERIFIED",
-        };
-      case "UNPAID":
-        return {
-          bg: "bg-amber-50",
-          text: "text-amber-700",
-          border: "border-amber-100",
-          label: "VERIFYING",
-        };
-      case "CANCELLED":
-      case "REJECTED":
-        return {
-          bg: "bg-rose-50",
-          text: "text-rose-700",
-          border: "border-rose-100",
-          label: "DROPPED",
-        };
-      default:
-        return {
-          bg: "bg-gray-50",
-          text: "text-gray-700",
-          border: "border-gray-100",
-          label: status,
-        };
-    }
-  };
+  // 3. Sanitasi Data (PENTING!)
+  // Prisma balikin object Date, tapi Client Component minta String/JSON.
+  // Kita konversi dulu biar ga error "Serialization Error".
+  const reservations = JSON.parse(JSON.stringify(rawReservations));
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 1. Header Section */}
-      <HeaderSection
-        title="Schedules & Bookings"
-      />
+      <HeaderSection title="Schedules & Bookings" />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        {reservations.length === 0 ? (
-          <div className="text-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100">
-            <div className="mx-auto bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mb-6">
-              <SparklesIcon className="w-10 h-10 text-blue-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              No bookings yet? Seriously?
-            </h3>
-            <p className="text-gray-500 mb-8 max-w-sm mx-auto">
-              Your schedule is literally empty. Let's fix that ASAP and find you
-              a court.
-            </p>
-            <Link
-              href="/field"
-              className="inline-flex items-center gap-2 px-8 py-3 bg-[#f64e42] text-white font-semibold rounded-full hover:bg-[#d93d32] transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
-            >
-              Find a Court Now <ArrowRightIcon className="w-4 h-4" />
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-8">
-            {reservations.map((res) => {
-              const statusStyle = getStatusStyle(
-                res.Payment?.status || "UNPAID"
-              );
-              const isPaid = res.Payment?.status === "PAID";
-              const hasReview = (res as any).Review;
-
-              return (
-                <div
-                  key={res.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 group"
-                >
-                  <div className="p-6 sm:flex gap-8">
-                    {/* Thumbnail Image */}
-                    <div className="relative h-48 w-full sm:w-64 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0 mb-6 sm:mb-0 shadow-inner">
-                      <Image
-                        src={res.Field.image || "/card-lapangan.jpg"}
-                        alt={res.Field.name}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                      {/* Overlay Gradient */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-60" />
-                      <div className="absolute bottom-3 left-3 text-white">
-                        <p className="text-xs font-medium bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg border border-white/30 inline-block">
-                          {res.Field.type.replace("_", " ")}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Booking Details */}
-                    <div className="flex-grow flex flex-col justify-between">
-                      <div>
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="text-2xl font-bold text-gray-900 line-clamp-1 mb-1 group-hover:text-[#f64e42] transition-colors">
-                              {res.Field.name}
-                            </h3>
-                            <p className="text-gray-500 text-sm line-clamp-1">
-                              {res.Field.address}
-                            </p>
-                          </div>
-                          <span
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}
-                          >
-                            {statusStyle.label}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-y-3 text-sm text-gray-600 mt-6">
-                          <div className="flex items-center gap-3">
-                            <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
-                            <span className="font-medium text-gray-900">
-                              {new Date(res.startDate).toLocaleDateString(
-                                "en-GB",
-                                {
-                                  weekday: "long",
-                                  day: "numeric",
-                                  month: "long",
-                                  year: "numeric",
-                                }
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <ClockIcon className="h-5 w-5 text-gray-400" />
-                            <span>
-                              {new Date(res.startDate).toLocaleTimeString(
-                                "id-ID",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}{" "}
-                              -{" "}
-                              {new Date(res.endDate).toLocaleTimeString(
-                                "id-ID",
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3 pt-2 border-t border-gray-50 mt-2">
-                            <BanknotesIcon className="h-5 w-5 text-gray-400" />
-                            <span className="font-bold text-[#f64e42] text-lg">
-                              Rp {res.price.toLocaleString("id-ID")}
-                            </span>
-                            <span className="text-gray-300 text-xs ml-auto font-mono">
-                              REF: {res.id.slice(0, 8).toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* === ACTION FOOTER === */}
-
-                  {/* 1. WAITING VERIFICATION */}
-                  {res.Payment?.status === "UNPAID" && (
-                    <div className="bg-amber-50 px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-amber-100">
-                      <div className="flex items-center gap-3 text-amber-800 text-sm">
-                        <div className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-                        </div>
-                        <p>
-                          <span className="font-bold">Payment in review.</span>{" "}
-                          Hang tight, admin is checking your slip.
-                        </p>
-                      </div>
-                      <Link
-                        href="https://wa.me/6287889387992"
-                        target="_blank"
-                        className="text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-6 py-2.5 rounded-full transition-all w-full sm:w-auto text-center shadow-md hover:shadow-lg"
-                      >
-                        Ping Admin on WA
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* 2. PAID & REVIEW SECTION */}
-                  {isPaid && (
-                    <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100 flex items-center justify-between transition-colors hover:bg-gray-50">
-                      {hasReview ? (
-                        <div className="flex items-center gap-4 w-full">
-                          <div className="bg-green-100 text-green-700 p-2 rounded-lg">
-                            <ChatBubbleBottomCenterTextIcon className="w-5 h-5" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">
-                              Your Rating
-                            </span>
-                            <div className="flex text-yellow-400">
-                              {[...Array(5)].map((_, i) => (
-                                <StarSolid
-                                  key={i}
-                                  className={`h-4 w-4 ${
-                                    i < hasReview.rating ? "" : "text-gray-200"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <div className="hidden sm:block h-8 w-px bg-gray-200 mx-2"></div>
-                          <span className="text-sm text-gray-500 italic truncate max-w-xs">
-                            "{hasReview.comment}"
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-4">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-purple-100 p-2 rounded-lg">
-                              <SparklesIcon className="h-5 w-5 text-purple-600" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-bold text-gray-900">
-                                How was the match?
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Drop a review to help the community.
-                              </p>
-                            </div>
-                          </div>
-                          <div className="w-full sm:w-auto">
-                            <ReviewModal
-                              reservationId={res.id}
-                              fieldId={res.fieldId}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* 4. Oper data ke Client Component */}
+        <MyReservationList reservations={reservations} />
       </div>
     </div>
   );

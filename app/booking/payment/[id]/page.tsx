@@ -68,7 +68,6 @@ export default async function PaymentPage({
     (1000 * 60 * 60);
 
   return (
-    // 👇 FIX DISINI BOS: Tambahin pt-24 biar gak ketimpa navbar
     <div className="min-h-screen bg-gray-50 pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-6xl mx-auto">
         {/* Breadcrumb Simple */}
@@ -216,13 +215,18 @@ export default async function PaymentPage({
             </div>
           </div>
 
-          {/* KOLOM KANAN: Form Pembayaran (Sticky) */}
+          {/* KOLOM KANAN: Form Pembayaran */}
           <div className="lg:col-span-5">
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 sm:p-8 sticky top-28">
               <h3 className="text-xl font-bold text-gray-900 mb-6">
                 Payment Method
               </h3>
-              <PaymentForm reservationId={reservation.id} />
+
+              {/* 👇 PASSING createdAt KE COMPONENT */}
+              <PaymentForm
+                reservationId={reservation.id}
+                createdAt={reservation.createdAt.toISOString()}
+              />
             </div>
           </div>
         </div>

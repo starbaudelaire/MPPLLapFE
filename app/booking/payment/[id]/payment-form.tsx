@@ -9,13 +9,16 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ClockIcon,
-  DocumentDuplicateIcon, // Icon buat copy
+  DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 
+// 👇 Terima props createdAt
 export default function PaymentForm({
   reservationId,
+  createdAt,
 }: {
   reservationId: string;
+  createdAt: string;
 }) {
   const [selected, setSelected] = useState("QRIS");
   const [loading, setLoading] = useState(false);
@@ -24,25 +27,39 @@ export default function PaymentForm({
     type: "ok" | "err";
   } | null>(null);
 
-  // STATE BUAT RANDOM VA
   const [vaNumber, setVaNumber] = useState("Loading...");
 
-  // LOGIC TIMER 30 MENIT
-  const [timeLeft, setTimeLeft] = useState(30 * 60);
+  // 👇 LOGIC TIMER BARU (REAL TIME)
+  // Default 0 dulu biar ga error hydration, nanti diisi useEffect
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
-    // 1. Generate Nomor VA Random (Format: 8800 + 8 digit acak)
+    // 1. Generate VA Random
     const randomSuffix = Math.floor(
       10000000 + Math.random() * 90000000
     ).toString();
     setVaNumber(`8800${randomSuffix}`);
 
-    // 2. Timer Logic
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
+    // 2. Hitung Deadline: Waktu Booking Dibuat + 30 Menit
+    const bookingTime = new Date(createdAt).getTime();
+    const deadline = bookingTime + 30 * 60 * 1000; // 30 menit dalam milidetik
+
+    const updateTimer = () => {
+      const now = new Date().getTime();
+      const difference = deadline - now;
+
+      // Kalau waktu abis, set 0. Kalau belum, convert ke detik.
+      const secondsLeft = Math.max(0, Math.floor(difference / 1000));
+      setTimeLeft(secondsLeft);
+    };
+
+    // Jalanin sekali pas mount biar langsung muncul
+    updateTimer();
+
+    // Update tiap detik
+    const timer = setInterval(updateTimer, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [createdAt]); // Dependency ke createdAt
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -63,7 +80,7 @@ export default function PaymentForm({
     formData.append("reservationId", reservationId);
     formData.append("paymentMethod", selected);
 
-    await new Promise((r) => setTimeout(r, 1500)); // Simulasi loading
+    await new Promise((r) => setTimeout(r, 1500));
 
     const res = await confirmPayment(formData);
     if (res?.error) {
@@ -92,12 +109,30 @@ export default function PaymentForm({
   return (
     <div className="relative space-y-6">
       {/* COUNTDOWN */}
-      <div className="flex items-center justify-between bg-orange-50 border border-orange-100 p-4 rounded-xl animate-in slide-in-from-top-2">
-        <div className="flex items-center gap-2 text-orange-700">
+      <div
+        className={`flex items-center justify-between border p-4 rounded-xl animate-in slide-in-from-top-2 transition-colors ${
+          timeLeft <= 0
+            ? "bg-red-50 border-red-200"
+            : "bg-orange-50 border-orange-100"
+        }`}
+      >
+        <div
+          className={`flex items-center gap-2 ${
+            timeLeft <= 0 ? "text-red-700" : "text-orange-700"
+          }`}
+        >
           <ClockIcon className="w-5 h-5 animate-pulse" />
-          <span className="text-sm font-bold">Pay before</span>
+          <span className="text-sm font-bold">
+            {timeLeft <= 0 ? "Payment Expired" : "Pay before"}
+          </span>
         </div>
-        <span className="text-xl font-mono font-bold text-orange-600 bg-white px-3 py-1 rounded-lg border border-orange-100 shadow-sm">
+        <span
+          className={`text-xl font-mono font-bold px-3 py-1 rounded-lg border shadow-sm ${
+            timeLeft <= 0
+              ? "text-red-600 bg-white border-red-100"
+              : "text-orange-600 bg-white border-orange-100"
+          }`}
+        >
           {formatTime(timeLeft)}
         </span>
       </div>
@@ -123,7 +158,6 @@ export default function PaymentForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         {methods.map((m) => (
           <div key={m.id} className="relative group">
-            {/* RADIO CARD */}
             <label
               className={`flex items-center p-4 border-2 cursor-pointer transition-all duration-300 ${
                 selected === m.id
@@ -184,7 +218,7 @@ export default function PaymentForm({
               </div>
             )}
 
-            {/* VA CONTENT (RANDOMIZED) */}
+            {/* VA CONTENT */}
             {selected === m.id && m.id === "TRANSFER" && (
               <div className="border-2 border-t-0 border-[#f64e42] rounded-b-2xl p-6 bg-white animate-in slide-in-from-top-2 space-y-4">
                 <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex justify-between items-center group/copy hover:border-blue-300 transition-colors">
@@ -218,8 +252,8 @@ export default function PaymentForm({
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full mt-6 bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          disabled={loading || timeLeft <= 0} // Disable kalau waktu abis
+          className="w-full mt-6 bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -243,6 +277,8 @@ export default function PaymentForm({
               </svg>
               Verifying...
             </>
+          ) : timeLeft <= 0 ? (
+            "Booking Expired"
           ) : (
             "I Have Paid"
           )}

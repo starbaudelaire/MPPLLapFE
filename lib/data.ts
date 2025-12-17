@@ -80,29 +80,55 @@ export const getUserReservations = async () => {
   }
 };
 
+//
+
 // ==========================================
-// SECTION 2: ADMIN DASHBOARD DATA (YANG TADI HILANG)
+// SECTION 2: ADMIN DASHBOARD DATA (REKAP BULANAN)
 // ==========================================
 
-// 4. Hitung Pendapatan Hari Ini
-export const getTodayRevenue = async () => {
-  const now = new Date();
-  const offsetWIB = 7 * 60 * 60 * 1000;
-  const nowWIB = new Date(now.getTime() + offsetWIB);
-  nowWIB.setUTCHours(0, 0, 0, 0);
-  const startOfDayUTC = new Date(nowWIB.getTime() - offsetWIB);
+// 4. Hitung Pendapatan BULANAN (Berdasarkan Parameter Bulan & Tahun)
+export const getMonthlyRevenue = async (month: number, year: number) => {
+  // Logic: Dari Tanggal 1 jam 00:00 s/d Tanggal Terakhir Bulan Itu jam 23:59
+
+  // Start Date: Tanggal 1 bulan ini (UTC)
+  const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+
+  // End Date: Tanggal 0 bulan depan (aka Tanggal Terakhir bulan ini)
+  const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
 
   try {
     const result = await prisma.payment.aggregate({
       _sum: { amount: true },
       where: {
         status: "PAID",
-        createdAt: {
-          gte: startOfDayUTC,
+        updatedAt: {
+          // Pake updatedAt biar akurat kapan duit masuk
+          gte: startDate,
+          lte: endDate,
         },
       },
     });
     return result._sum.amount || 0;
+  } catch (error) {
+    return 0;
+  }
+};
+
+// 4b. Hitung Total Booking BULANAN (Opsional, biar sinkron sama revenue)
+export const getMonthlyBookingCount = async (month: number, year: number) => {
+  const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+  const endDate = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+
+  try {
+    return await prisma.reservation.count({
+      where: {
+        createdAt: {
+          // Booking yang DIBUAT bulan ini
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
   } catch (error) {
     return 0;
   }

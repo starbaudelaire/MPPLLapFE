@@ -8,86 +8,90 @@ import {
   CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 
-export default function DateFilter({
-  currentDateStr,
-}: {
-  currentDateStr: string;
-}) {
+interface MonthFilterProps {
+  currentMonth: number; // 1 - 12
+  currentYear: number;
+}
+
+export default function MonthFilter({
+  currentMonth,
+  currentYear,
+}: MonthFilterProps) {
   const router = useRouter();
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Helper: Pindah Hari (Prev/Next)
+  // Format Value buat Input Month (YYYY-MM)
+  const inputValue = `${currentYear}-${String(currentMonth).padStart(2, "0")}`;
+
+  // Helper: Pindah Bulan
   const handleNavigate = (direction: "prev" | "next") => {
-    const date = new Date(currentDateStr);
-    date.setDate(date.getDate() + (direction === "next" ? 1 : -1));
-    const newDateStr = date.toISOString().split("T")[0];
-    router.push(`/admin/revenue?date=${newDateStr}`);
+    let newMonth = direction === "next" ? currentMonth + 1 : currentMonth - 1;
+    let newYear = currentYear;
+
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear++;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear--;
+    }
+
+    router.push(`/admin/dashboard?month=${newMonth}&year=${newYear}`);
   };
 
-  // Helper: Pilih dari Kalender
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newDate = e.target.value;
-    if (newDate) {
-      router.push(`/admin/revenue?date=${newDate}`);
+  // Helper: Pilih dari Picker
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value; // "2025-02"
+    if (val) {
+      const [y, m] = val.split("-").map(Number);
+      router.push(`/admin/dashboard?month=${m}&year=${y}`);
     }
   };
 
-  // Trigger Kalender biar muncul
-  const openCalendar = () => {
-    try {
-      dateInputRef.current?.showPicker(); // API Modern Browser
-    } catch (error) {
-      dateInputRef.current?.click(); // Fallback
-    }
-  };
-
-  // Format Tanggal Cantik (ex: "Senin, 12 Okt 2025")
+  // Format Tampilan (ex: "October 2025")
   const displayDate = new Intl.DateTimeFormat("id-ID", {
-    weekday: "long",
-    day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(currentDateStr));
+  }).format(new Date(currentYear, currentMonth - 1));
 
   return (
     <div className="flex items-center bg-white shadow-sm border border-gray-200 rounded-full p-1.5 gap-2 transition-all hover:shadow-md">
-      {/* PREV BUTTON */}
+      {/* PREV MONTH */}
       <button
         onClick={() => handleNavigate("prev")}
         className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-all active:scale-90"
-        title="Previous Day"
+        title="Previous Month"
       >
         <ChevronLeftIcon className="w-5 h-5" />
       </button>
 
-      {/* CENTER PILL (THE CALENDAR TRIGGER) */}
+      {/* CENTER PILL (Month Picker) */}
       <div className="relative group">
-        {/* Tampilan Luar (Kosmetik) */}
         <div
-          onClick={openCalendar}
+          onClick={() => inputRef.current?.showPicker()}
           className="flex items-center gap-3 px-6 py-2.5 border-gray-100 group-hover:border-gray-300 transition-all active:scale-95"
         >
-          <CalendarDaysIcon className="w-5 h-5 text-[#f64e42] group-hover:scale-110 transition-transform" />
+          <CalendarDaysIcon className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
           <span className="text-sm font-light text-gray-900 whitespace-nowrap min-w-[120px] text-center select-none tracking-wide">
             {displayDate}
           </span>
         </div>
 
-        {/* Input Asli (Ngumpet tapi kerjanya penting) */}
+        {/* Input Month Native */}
         <input
-          type="date"
-          ref={dateInputRef}
-          value={currentDateStr}
-          onChange={handleDateChange}
+          type="month"
+          ref={inputRef}
+          value={inputValue}
+          onChange={handleChange}
           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full -z-10"
         />
       </div>
 
-      {/* NEXT BUTTON */}
+      {/* NEXT MONTH */}
       <button
         onClick={() => handleNavigate("next")}
         className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-all active:scale-90"
-        title="Next Day"
+        title="Next Month"
       >
         <ChevronRightIcon className="w-5 h-5" />
       </button>

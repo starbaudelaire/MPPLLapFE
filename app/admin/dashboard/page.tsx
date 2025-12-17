@@ -1,6 +1,6 @@
 import {
-  getTodayRevenue,
-  getTotalBooking,
+  getMonthlyRevenue, // 👈 GANTI IMPORT
+  getMonthlyBookingCount, // 👈 GANTI IMPORT
   getTotalActiveFields,
   getAllReservations,
 } from "@/lib/data";
@@ -9,21 +9,35 @@ import {
   BanknotesIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
-  XCircleIcon,
   SparklesIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
+import MonthFilter from "@/components/admin/dashboard/month-filter"; // 👈 IMPORT COMPONENT BARU
 
-export default async function AdminDashboard() {
-  // 1. Tarik semua data secara PARALEL (biar ngebut)
-  const [todayRevenue, totalBooking, activeFields, reservations] =
+// Force Dynamic biar data selalu fresh tiap ganti bulan
+export const dynamic = "force-dynamic";
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string; year?: string }>;
+}) {
+  const params = await searchParams;
+
+  // 1. Tentukan Bulan & Tahun (Default: Hari Ini)
+  const now = new Date();
+  const currentMonth = Number(params.month) || now.getMonth() + 1; // 1-12
+  const currentYear = Number(params.year) || now.getFullYear();
+
+  // 2. Tarik Data Sesuai Filter Bulan
+  const [monthlyRevenue, monthlyBooking, activeFields, reservations] =
     await Promise.all([
-      getTodayRevenue(),
-      getTotalBooking(),
+      getMonthlyRevenue(currentMonth, currentYear), // 👈 Pake Parameter Bulan
+      getMonthlyBookingCount(currentMonth, currentYear), // 👈 Pake Parameter Bulan
       getTotalActiveFields(),
-      getAllReservations(),
+      getAllReservations(), // Table tetep tampilin semua reservasi terbaru (optional: bisa difilter juga kalo mau)
     ]);
 
-  // Helper: Format Rupiah
   const formatRupiah = (number: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -32,67 +46,61 @@ export default async function AdminDashboard() {
     }).format(number);
   };
 
-  // Helper: Format Tanggal
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="space-y-10 pb-20">
-      {/* HEADER SECTION - Steve Jobs Vibe */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Control Center
-        </h1>
-        <p className="text-gray-500 text-lg font-light tracking-wide">
-          Dear Admin, How is life btw?
-        </p>
+      {/* HEADER + FILTER BULAN */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+            Control Center
+          </h1>
+          <p className="text-gray-500 text-lg font-light tracking-wide">
+            Monthly Overview & Analytics.
+          </p>
+        </div>
+
+        {/* 👇 KOMPONEN FILTER BULAN DISINI */}
+        <MonthFilter currentMonth={currentMonth} currentYear={currentYear} />
       </div>
 
-      {/* STATS CARDS SECTION - Glassmorphism & Gradient */}
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Card 1: Revenue (Premium Green) */}
+        {/* Card 1: Revenue Bulanan */}
         <div className="group relative p-8 rounded-3xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl overflow-hidden hover:-translate-y-1 transition-all duration-500">
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <BanknotesIcon className="w-24 h-24 text-emerald-600 rotate-12" />
           </div>
           <div className="relative z-10">
             <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">
-              Total Revenue
+              Revenue (Monthly)
             </div>
             <div className="text-4xl font-bold text-gray-900 tracking-tight">
-              {formatRupiah(todayRevenue)}
+              {formatRupiah(monthlyRevenue)}
             </div>
             <div className="mt-4 flex items-center text-emerald-600 text-xs font-bold bg-emerald-50 w-fit px-3 py-1 rounded-full border border-emerald-100">
-              <SparklesIcon className="w-3 h-3 mr-1" /> Realtime Update
+              <SparklesIcon className="w-3 h-3 mr-1" /> Total for this month
             </div>
           </div>
         </div>
 
-        {/* Card 2: Total Booking (Deep Blue) */}
+        {/* Card 2: Total Booking Bulanan */}
         <div className="group relative p-8 rounded-3xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl overflow-hidden hover:-translate-y-1 transition-all duration-500">
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <CalendarDaysIcon className="w-24 h-24 text-blue-600 rotate-12" />
           </div>
           <div className="relative z-10">
             <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-2">
-              Bookings Secured
+              Bookings (Monthly)
             </div>
             <div className="text-4xl font-bold text-gray-900 tracking-tight">
-              {totalBooking}
+              {monthlyBooking}
             </div>
             <p className="mt-4 text-xs text-gray-400 font-medium">
-              Confirmed reservations so far.
+              New reservations this month.
             </p>
           </div>
         </div>
 
-        {/* Card 3: Active Fields (Vibrant Orange) */}
+        {/* Card 3: Active Fields (Tetep Total Semua) */}
         <div className="group relative p-8 rounded-3xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl overflow-hidden hover:-translate-y-1 transition-all duration-500">
           <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
             <CheckCircleIcon className="w-24 h-24 text-orange-600 rotate-12" />
@@ -111,8 +119,11 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* TABLE SECTION - Modern List */}
+      {/* ... (Sisanya Table Incoming Reservations tetep sama) ... */}
+      {/* ... Copy paste tabel dari kode lu sebelumnya ... */}
+      {/* Table Section tetep sama kayak kode lu sebelumnya */}
       <div className="bg-white/50 backdrop-blur-md rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+        {/* ... copy paste bagian table dari kode lu yg terakhir ... */}
         <div className="p-8 border-b border-gray-100/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900 tracking-tight">
@@ -160,7 +171,6 @@ export default async function AdminDashboard() {
                     key={item.id}
                     className="group hover:bg-white/60 transition-colors"
                   >
-                    {/* User Info */}
                     <td className="px-8 py-6">
                       <div className="font-bold text-gray-900 text-base mb-0.5">
                         {item.User.name || "Guest Player"}
@@ -169,15 +179,11 @@ export default async function AdminDashboard() {
                         {item.User.email}
                       </div>
                     </td>
-
-                    {/* Field Info */}
                     <td className="px-6 py-6">
                       <span className="font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-lg text-xs">
                         {item.Field.name}
                       </span>
                     </td>
-
-                    {/* Date Info */}
                     <td className="px-6 py-6">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900">
@@ -194,13 +200,9 @@ export default async function AdminDashboard() {
                         </span>
                       </div>
                     </td>
-
-                    {/* Price Info */}
                     <td className="px-6 py-6 font-bold text-gray-900 tracking-tight">
                       {formatRupiah(item.price)}
                     </td>
-
-                    {/* Status Badge - Modern Pills */}
                     <td className="px-6 py-6">
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border ${
@@ -212,15 +214,12 @@ export default async function AdminDashboard() {
                         }`}
                       >
                         {item.Payment?.status === "PAID"
-                          ? "COMPLETED"
+                          ? "SECURED"
                           : item.Payment?.status || "UNPAID"}
                       </span>
                     </td>
-
-                    {/* Action Buttons - Minimalist */}
                     <td className="px-6 py-6 text-right">
                       <div className="flex items-center justify-end gap-3 opacity-80 group-hover:opacity-100 transition-opacity">
-                        {/* APPROVE */}
                         {item.Payment?.status !== "PAID" &&
                           item.Payment?.status !== "CANCELLED" && (
                             <form action={updateReservationStatus}>
@@ -233,14 +232,12 @@ export default async function AdminDashboard() {
                               <button
                                 type="submit"
                                 className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm hover:shadow-emerald-200"
-                                title="Approve Payment"
+                                title="Approve"
                               >
                                 <CheckCircleIcon className="w-5 h-5" />
                               </button>
                             </form>
                           )}
-
-                        {/* CANCEL */}
                         {item.Payment?.status !== "CANCELLED" && (
                           <form action={updateReservationStatus}>
                             <input
@@ -256,20 +253,17 @@ export default async function AdminDashboard() {
                             <button
                               type="submit"
                               className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm hover:shadow-rose-200"
-                              title="Reject & Cancel"
+                              title="Reject"
                             >
                               <XCircleIcon className="w-5 h-5" />
                             </button>
                           </form>
                         )}
-
-                        {/* DONE STATUS */}
                         {item.Payment?.status === "PAID" && (
                           <span className="text-emerald-500 text-xs font-bold flex items-center gap-1 bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
                             <CheckCircleIcon className="w-3 h-3" /> VERIFIED
                           </span>
                         )}
-
                         {item.Payment?.status === "CANCELLED" && (
                           <span className="text-gray-400 text-xs font-bold flex items-center gap-1 px-3 py-1">
                             VOID
