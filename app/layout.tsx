@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
+import { Inter as FontSans } from "next/font/google";
 import Navbar from "@/components/navbar/navbar";
 import Footer from "@/components/footer";
-import { SessionProvider } from "next-auth/react"; // <-- Tetep ada
-import { auth } from "@/auth"; // <-- Tetep ada
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
-  title: "Lapang.in - Booking Lapangan Olahraga", // <-- Ganti judul
-  description: "Cari dan booking lapangan futsal, basket, badminton.", // <-- Ganti deskripsi
+  title: "Lapang.in - Booking Lapangan Olahraga",
+  description: "Cari dan booking lapangan futsal, basket, badminton.",
 };
+
+const fontSans = FontSans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export default async function RootLayout({
   children,
@@ -16,26 +25,27 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+
   return (
-    <html lang="en">
-      <head>
-        {/* Tambahin link font dari repo 'master' */}
-        <link
-          rel="stylesheet"
-          as="style"
-          crossOrigin="anonymous"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
-        />
-      </head>
-      {/* Ganti font dan background global */}
-      <body className="font-sans antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          "min-h-screen bg-white text-gray-900 antialiased",
+          fontSans.variable,
+          "font-sans"
+        )}
+      >
         <SessionProvider session={session}>
-          {" "}
-          {/* <-- Wrapper-nya tetep aman */}
-          <Navbar />
-          {/* Ganti background main content */}
-          <main className="bg-lapang-gray min-h-screen">{children}</main>
-          <Footer />
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Navbar />
+            <main className="bg-lapang-gray min-h-screen">{children}</main>
+            <Footer />
+          </ThemeProvider>
         </SessionProvider>
       </body>
     </html>

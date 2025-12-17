@@ -38,7 +38,7 @@ export default function ScanPage() {
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-8">
+    <div className="max-w-xl mx-auto space-y-8 pb-24">
       {/* HEADER */}
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
@@ -60,7 +60,6 @@ export default function ScanPage() {
               allowMultiple={true}
               scanDelay={2000} // Jeda antar scan
               components={{
-                audio: false,
                 onOff: false,
                 torch: true, // Lampu flash kalo gelap
                 zoom: true,

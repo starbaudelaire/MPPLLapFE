@@ -1,9 +1,8 @@
 import CreateForm from "./create-form";
-import { getAmenities } from "@/lib/data";
+import { getAllAmenities } from "@/lib/data";
 
 const CreateField = async () => {
-  // <-- Ganti nama
-  const amenities = await getAmenities();
+  const amenities = await getAllAmenities();
   if (!amenities) return null;
 
   return (

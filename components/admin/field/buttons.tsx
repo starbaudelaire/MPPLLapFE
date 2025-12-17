@@ -32,8 +32,10 @@ export function UpdateField({ id }: { id: string }) {
 }
 
 export function DeleteField({ id }: { id: string }) {
-  // Pake Server Action buat delete
-  const deleteFieldWithId = deleteField.bind(null, id);
+  async function deleteFieldWithId(formData: FormData) {
+    "use server";
+    await deleteField(id, formData);
+  }
 
   return (
     <form action={deleteFieldWithId}>

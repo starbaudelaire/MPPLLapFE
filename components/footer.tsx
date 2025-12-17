@@ -34,7 +34,7 @@ function Footer() {
                     </Link>
                   </li>
                   <li>
-                    <Link href="/lapangan" className="hover:text-white">
+                    <Link href="/field" className="hover:text-white">
                       Fields
                     </Link>
                   </li>

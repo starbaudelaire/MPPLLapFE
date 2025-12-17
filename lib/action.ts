@@ -5,6 +5,7 @@
 import { auth } from "@/auth";
 import { FieldSchema } from "@/lib/zod";
 import { prisma } from "@/lib/prisma";
+import { PaymentStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { writeFile, mkdir } from "fs/promises";
@@ -192,7 +193,7 @@ export const updateField = async (
   redirect("/admin/field");
 };
 
-export const deleteField = async (id: string) => {
+export const deleteField = async (id: string, _formData: FormData) => {
   try {
     await prisma.field.delete({ where: { id } });
   } catch (error) {
@@ -368,7 +369,7 @@ export const cancelReservation = async (reservationId: string) => {
 
 export const updateReservationStatus = async (formData: FormData) => {
   const reservationId = formData.get("reservationId") as string;
-  const newStatus = formData.get("status") as string;
+  const newStatus = formData.get("status") as PaymentStatus;
 
   if (!reservationId || !newStatus) return;
 

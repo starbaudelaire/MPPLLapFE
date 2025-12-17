@@ -21,6 +21,7 @@ export default async function FieldPage({
       {/* 1. Header Image */}
       <HeaderSection
         title="Your Field, Your Game"
+        subTitle="Find the perfect court that matches your playstyle."
       />
 
       {/* 2. SEARCH FILTER SECTION (STATIC) */}

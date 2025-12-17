@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { createReservation, getBookedHours } from "@/lib/action";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const TIME_SLOTS = [
   "08:00",
@@ -33,10 +44,12 @@ export default function BookingCard({
   userId,
 }: BookingCardProps) {
   const [date, setDate] = useState("");
+  const [teamName, setTeamName] = useState("");
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     const fetchBookedSlots = async () => {
@@ -77,9 +90,8 @@ export default function BookingCard({
   const totalPrice = totalHours * pricePerHour;
 
   const handleBooking = async () => {
-    if (!date || selectedTimes.length === 0)
-      return alert("Pilih tanggal & jam dulu bos!");
-    if (!userId) return alert("Login dulu bro sebelum booking!");
+    if (!date || selectedTimes.length === 0) return;
+    if (!userId) return;
 
     setIsBooking(true);
 
@@ -91,7 +103,8 @@ export default function BookingCard({
     formData.append("fieldId", fieldId);
     formData.append("userId", userId);
     formData.append("startDate", `${date}T${startTimeStr}`);
-    
+    formData.append("teamName", teamName);
+
     // [PENTING] Kirim durasi jam ke server!
     formData.append("hours", totalHours.toString());
     formData.append("price", totalPrice.toString());
@@ -99,13 +112,12 @@ export default function BookingCard({
     const result = await createReservation(formData);
 
     if (result?.error) {
-      alert(result.error);
       setIsBooking(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-24">
+    <div className="bg-white rounded-xl shadow-soft border border-gray-100 p-6 sticky top-24">
       <div className="flex justify-between items-end mb-6">
         <div>
           <p className="text-sm text-gray-500 font-medium">Harga per jam</p>
@@ -113,6 +125,18 @@ export default function BookingCard({
             Rp {pricePerHour.toLocaleString("id-ID")}
           </h3>
         </div>
+      </div>
+
+      {/* Team Name */}
+      <div className="mb-4 space-y-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Team Name
+        </label>
+        <Input
+          placeholder="Team Name"
+          value={teamName}
+          onChange={(e) => setTeamName(e.target.value)}
+        />
       </div>
 
       {/* Input Tanggal */}
@@ -204,20 +228,64 @@ export default function BookingCard({
             Rp {totalPrice.toLocaleString("id-ID")}
           </span>
         </div>
-        <button
-          onClick={handleBooking}
-          disabled={!date || selectedTimes.length === 0 || isBooking}
-          className="w-full bg-[#f64e42] text-white font-bold py-3 rounded-lg hover:bg-[#d93d32] disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-95 flex justify-center items-center"
-        >
-          {isBooking ? (
-            <>
-              <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>
-              Proses Payment...
-            </>
-          ) : (
-            "Lanjut Pembayaran"
-          )}
-        </button>
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="default"
+              className="w-full shadow-soft"
+              disabled={
+                !date || selectedTimes.length === 0 || isBooking || !userId
+              }
+            >
+              {isBooking ? "Processing..." : "Book Now"}
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Booking</DialogTitle>
+              <DialogDescription>
+                Please review your booking details before continuing to payment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 text-sm">
+              <p>
+                <span className="font-medium">Team:</span>{" "}
+                {teamName || "Not set"}
+              </p>
+              <p>
+                <span className="font-medium">Date:</span> {date || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Hours:</span> {totalHours}h
+              </p>
+              <p>
+                <span className="font-medium">Total:</span>{" "}
+                Rp {totalPrice.toLocaleString("id-ID")}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="default"
+                className="bg-[#0A84FF] text-white hover:bg-[#0666cc] shadow-soft"
+                onClick={async () => {
+                  await handleBooking();
+                  setConfirmOpen(false);
+                }}
+                disabled={isBooking}
+              >
+                {isBooking ? "Processing..." : "Confirm Booking"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <p className="text-xs text-center text-gray-400 mt-3">
           Belum dikenakan biaya admin.
         </p>

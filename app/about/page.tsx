@@ -10,7 +10,10 @@ export const metadata: Metadata = {
 const page = () => {
   return (
     <div>
-      <HeaderSection title="Get to Know Us" />
+      <HeaderSection
+        title="Get to Know Us"
+        subTitle="Behind the courts: the team and story of Lapang.in."
+      />
       <div className="max-w-4xl mx-auto py-20 px-4 text-center">
         <p className="text-lg text-gray-700 max-w-2xl mx-auto">
           A team of sport lovers and tech builders, creating a platform that

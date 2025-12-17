@@ -10,11 +10,14 @@ import { FaInstagram, FaTwitter, FaWhatsapp } from "react-icons/fa";
 export default function ContactPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeaderSection title="Get in Touch" />
+      <HeaderSection
+        title="Get in Touch"
+        subTitle="We'd love to hear from you—drop us a message anytime."
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
         {/* Container Glassmorphism */}
-        <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col lg:flex-row">
+        <div className="relative rounded-2xl border border-white/70 bg-white/80 backdrop-blur-2xl shadow-soft overflow-hidden flex flex-col lg:flex-row">
           {/* DEKORASI BACKGROUND */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
             <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-blue-400/20 rounded-full blur-3xl opacity-50"></div>
@@ -35,10 +38,10 @@ export default function ContactPage() {
             <div className="absolute inset-0 bg-gradient-to-b from-gray-900/80 to-gray-900/95 z-0"></div>
 
             <div className="relative z-10">
-              <h2 className="text-3xl font-bold tracking-tight mb-2">
+              <h2 className="text-2xl font-bold tracking-tight mb-2">
                 Let's Connect!
               </h2>
-              <p className="text-lg text-gray-400 text-lg mb-10">
+              <p className="text-[15px] text-gray-400 text-lg mb-10">
                 Just drop us a line. Our admin is basically online 24/7 (unless
                 they're touching grass).
               </p>
@@ -52,7 +55,7 @@ export default function ContactPage() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                       Call / WhatsApp
                     </p>
-                    <p className="text-lg font-medium">+62 878-8938-7992</p>
+                    <p className="text-[15px] font-medium">+62 878-8938-7992</p>
                   </div>
                 </div>
 
@@ -64,7 +67,7 @@ export default function ContactPage() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                       Email Inquiry
                     </p>
-                    <p className="text-lg font-medium">lapang.in@example.com</p>
+                    <p className="text-[15px] font-medium">lapang.in@example.com</p>
                   </div>
                 </div>
 
@@ -76,7 +79,7 @@ export default function ContactPage() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                       Headquarters
                     </p>
-                    <p className="text-lg font-medium">
+                    <p className="text-[15px] font-medium">
                       Jl. Babarsari Jl. Tambak Bayan No.2, Janti, Caturtunggal,
                       Kec. Depok, Kabupaten Sleman, Daerah Istimewa Yogyakarta
                       55281
@@ -87,30 +90,11 @@ export default function ContactPage() {
             </div>
 
             {/* Social Media Links */}
-            <div className="relative z-10 mt-12 flex gap-4">
-              <a
-                href="#"
-                className="p-3 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-all"
-              >
-                <FaInstagram className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="p-3 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-all"
-              >
-                <FaTwitter className="w-5 h-5" />
-              </a>
-              <a
-                href="#"
-                className="p-3 bg-white/10 rounded-full hover:bg-white hover:text-gray-900 transition-all"
-              >
-                <FaWhatsapp className="w-5 h-5" />
-              </a>
-            </div>
+            
           </div>
 
           {/* === KOLOM KANAN: FORM === */}
-          <div className="lg:w-7/12 bg-white p-10 sm:p-12 relative z-10">
+          <div className="lg:w-7/12 bg-white p-10 sm:p-17 relative z-10">
             <div className="max-w-md mx-auto lg:ml-0">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 Slide into our Inbox

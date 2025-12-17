@@ -19,7 +19,10 @@ export default async function MyReservationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeaderSection title="Schedules & Bookings" />
+      <HeaderSection
+        title="Schedules & Bookings"
+        subTitle="Keep track of your upcoming and past reservations in one place."
+      />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* 4. Oper data ke Client Component */}

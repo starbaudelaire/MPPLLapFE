@@ -43,8 +43,7 @@ export default async function AdminFieldPage({
             className="group relative bg-white rounded-3xl border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col"
           >
             {/* Image Header */}
-            {/* UPDATED: h-56 ketinggian buat card compact, h-48 or h-52 is sweet spot */}
-            <div className="relative h-52 w-full bg-gray-100">
+            <div className="relative h-44 w-full bg-gray-100">
               <Image
                 src={field.image || "/card-lapangan.jpg"}
                 alt={field.name}

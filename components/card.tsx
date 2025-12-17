@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Field, Review } from "@prisma/client";
+import { Field } from "@prisma/client";
 import { MapPinIcon, StarIcon } from "@heroicons/react/24/solid";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
 interface CardProps {
-  field: Field & { Reviews: Review[] };
+  field: Field & { Reviews: { rating: number }[] };
 }
 
 const Card = ({ field }: CardProps) => {

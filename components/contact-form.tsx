@@ -39,7 +39,7 @@ export default function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 relative">
+    <form onSubmit={handleSubmit} className="space-y-4 relative text-sm">
       {/* --- TOAST NOTIFICATION --- */}
       {toast && (
         <div
@@ -59,7 +59,7 @@ export default function ContactForm() {
       )}
 
       {/* NAME & EMAIL */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative">
           <input
             type="text"
@@ -67,11 +67,11 @@ export default function ContactForm() {
             id="name"
             placeholder=" "
             required
-            className="peer w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#f64e42]/20 focus:border-[#f64e42] transition-all placeholder-transparent"
+            className="peer w-full px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all placeholder-transparent text-sm"
           />
           <label
             htmlFor="name"
-            className="absolute left-4 -top-2.5 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-[#f64e42] peer-focus:text-xs"
+            className="absolute left-3 -top-2 bg-white px-1 text-[11px] text-gray-500 transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2 peer-focus:text-brand peer-focus:text-[11px]"
           >
             Full Name
           </label>
@@ -84,11 +84,11 @@ export default function ContactForm() {
             id="email"
             placeholder=" "
             required
-            className="peer w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#f64e42]/20 focus:border-[#f64e42] transition-all placeholder-transparent"
+            className="peer w-full px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all placeholder-transparent text-sm"
           />
           <label
             htmlFor="email"
-            className="absolute left-4 -top-2.5 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-[#f64e42] peer-focus:text-xs"
+            className="absolute left-3 -top-2 bg-white px-1 text-[11px] text-gray-500 transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2 peer-focus:text-brand peer-focus:text-[11px]"
           >
             Email Address
           </label>
@@ -103,11 +103,11 @@ export default function ContactForm() {
           id="subject"
           placeholder=" "
           required
-          className="peer w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#f64e42]/20 focus:border-[#f64e42] transition-all placeholder-transparent"
+          className="peer w-full px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all placeholder-transparent text-sm"
         />
         <label
           htmlFor="subject"
-          className="absolute left-4 -top-2.5 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-[#f64e42] peer-focus:text-xs"
+          className="absolute left-3 -top-2 bg-white px-1 text-[11px] text-gray-500 transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2 peer-focus:text-brand peer-focus:text-[11px]"
         >
           Subject / Topic
         </label>
@@ -118,14 +118,14 @@ export default function ContactForm() {
         <textarea
           name="message"
           id="message"
-          rows={5}
+          rows={4}
           placeholder=" "
           required
-          className="peer w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#f64e42]/20 focus:border-[#f64e42] transition-all placeholder-transparent resize-none"
+          className="peer w-full px-3 py-2.5 rounded-lg bg-gray-50 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all placeholder-transparent resize-none text-sm"
         ></textarea>
         <label
           htmlFor="message"
-          className="absolute left-4 -top-2.5 bg-white px-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:-top-2.5 peer-focus:text-[#f64e42] peer-focus:text-xs"
+          className="absolute left-3 -top-2 bg-white px-1 text-[11px] text-gray-500 transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-2.5 peer-focus:-top-2 peer-focus:text-brand peer-focus:text-[11px]"
         >
           Your Message
         </label>
@@ -135,7 +135,7 @@ export default function ContactForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-[#f64e42] hover:bg-[#d93d32] text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all hover:-translate-y-1 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 py-3 px-5 bg-[#0A84FF] hover:bg-[#0666cc] text-white font-semibold rounded-full shadow-soft transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed text-sm"
       >
         {loading ? (
           <>
